@@ -72,7 +72,7 @@ void draw_display(Chip8* vm, SDL_Renderer* renderer) {
 	for (int i = 0; i < SCREEN_SIZE; i++) {
 		if (vm->display[i]) {
 			// Render white filled quad
-			SDL_Rect fill_rect = { (i % SCREEN_W) * x_scale, (i / SCREEN_H) * y_scale, x_scale, y_scale };
+			SDL_Rect fill_rect = { (i % SCREEN_W) * x_scale, (i / SCREEN_W) * y_scale, x_scale, y_scale };
 			SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 			SDL_RenderFillRect(renderer, &fill_rect);
 		}
