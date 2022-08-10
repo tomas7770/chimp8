@@ -1,6 +1,8 @@
 #include "Chip8.h"
 #include <cstdlib>
 
+void load_fontset(Chip8* vm);
+
 void init_vm(Chip8* vm) {
 	for (int i = 0; i < MEM_SIZE; i++)
 		vm->memory[i] = 0;
@@ -24,6 +26,15 @@ void init_vm(Chip8* vm) {
 void load_fontset(Chip8* vm) {
 	for (int i = 0; i < 80; i++)
 		vm->memory[i + FONT_ADDRESS] = chip8_fontset[i];
+}
+
+void load_rom(Chip8* vm, void* rom_file) {
+	int i = 0;
+	uint8_t* rom_by_byte = (uint8_t*)rom_file;
+	while (rom_by_byte[i] && (i + 0x200 < MEM_SIZE)) {
+		vm->memory[i + 0x200] = rom_by_byte[i];
+		i++;
+	}
 }
 
 // Clear display

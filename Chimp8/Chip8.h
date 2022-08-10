@@ -33,7 +33,7 @@ typedef struct {
 	int keypress_store_reg;
 } Chip8;
 
-uint8_t chip8_fontset[80] =
+const uint8_t chip8_fontset[80] =
 {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
   0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -54,7 +54,7 @@ uint8_t chip8_fontset[80] =
 };
 
 void init_vm(Chip8* vm);
-void load_fontset(Chip8* vm);
+void load_rom(Chip8* vm, void* rom_file);
 void cycle_vm(Chip8* vm);
 
 #endif
