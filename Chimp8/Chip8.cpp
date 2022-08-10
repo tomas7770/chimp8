@@ -149,12 +149,11 @@ void opcode_8XY5(Chip8* vm, uint16_t opcode) {
 	vm->registers[x] -= vm->registers[y];
 }
 
-// Store the least significant bit of VY in VF, shift VY to the right by 1, and copy the result to VX
+// Store the least significant bit of VX in VF, shift VX to the right by 1
 void opcode_8XY6(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	int y = (opcode & 0x00F0) >> 4;
-	vm->registers[0xF] = vm->registers[y] & 0x1;
-	vm->registers[x] = vm->registers[y] >>= 1;
+	vm->registers[0xF] = vm->registers[x] & 0x1;
+	vm->registers[x] >>= 1;
 }
 
 // Set VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there is not.
@@ -170,12 +169,11 @@ void opcode_8XY7(Chip8* vm, uint16_t opcode) {
 	vm->registers[x] = vm->registers[y] - vm->registers[x];
 }
 
-// Store the most significant bit of VY in VF, shift VY to the left by 1, and copy the result to VX
+// Store the most significant bit of VX in VF, shift VX to the left by 1
 void opcode_8XYE(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	int y = (opcode & 0x00F0) >> 4;
-	vm->registers[0xF] = vm->registers[y] & 0x80;
-	vm->registers[x] = vm->registers[y] <<= 1;
+	vm->registers[0xF] = (vm->registers[x] & 0x80) >> 7;
+	vm->registers[x] <<= 1;
 }
 
 // Skip next instruction if VX != VY
