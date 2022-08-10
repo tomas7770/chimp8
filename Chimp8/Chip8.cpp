@@ -368,8 +368,10 @@ void cycle_vm(Chip8* vm) {
 		opcode_9XY0(vm, opcode);
 	else if (opcode_firstdigit == 0xA000)
 		opcode_ANNN(vm, opcode);
-	else if (opcode_firstdigit == 0xB000)
+	else if (opcode_firstdigit == 0xB000) {
 		opcode_BNNN(vm, opcode);
+		return;
+	}
 	else if (opcode_firstdigit == 0xC000)
 		opcode_CXNN(vm, opcode);
 	else if (opcode_firstdigit == 0xD000)
