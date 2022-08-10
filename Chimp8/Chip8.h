@@ -54,7 +54,7 @@ const uint8_t chip8_fontset[80] =
 };
 
 void init_vm(Chip8* vm);
-void load_rom(Chip8* vm, void* rom_file);
+void load_rom(Chip8* vm, void* rom_file, size_t* rom_size);
 void cycle_vm(Chip8* vm);
 
 #endif

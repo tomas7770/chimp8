@@ -28,10 +28,10 @@ void load_fontset(Chip8* vm) {
 		vm->memory[i + FONT_ADDRESS] = chip8_fontset[i];
 }
 
-void load_rom(Chip8* vm, void* rom_file) {
+void load_rom(Chip8* vm, void* rom_file, size_t* rom_size) {
 	int i = 0;
 	uint8_t* rom_by_byte = (uint8_t*)rom_file;
-	while (rom_by_byte[i] && (i + 0x200 < MEM_SIZE)) {
+	while ((i < *rom_size) && (i + 0x200 < MEM_SIZE)) {
 		vm->memory[i + 0x200] = rom_by_byte[i];
 		i++;
 	}

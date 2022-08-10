@@ -12,7 +12,9 @@ int main(int argc, char* args[]) {
 	// Initialize SDL
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
-	void* rom_file = SDL_LoadFile("INVADERS.ch8", NULL);
+	SDL_RWops* rom_file_rwops = SDL_RWFromFile("INVADERS.ch8", "r+b");
+	size_t rom_size;
+	void* rom_file = SDL_LoadFile_RW(rom_file_rwops, &rom_size, 1);
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
 	}
@@ -32,7 +34,7 @@ int main(int argc, char* args[]) {
 			// VM
 			Chip8 vm;
 			init_vm(&vm);
-			load_rom(&vm, rom_file);
+			load_rom(&vm, rom_file, &rom_size);
 			// Main loop
 			bool running = true;
 			while (running) {
