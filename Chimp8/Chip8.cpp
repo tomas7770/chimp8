@@ -297,18 +297,18 @@ void opcode_FX33(Chip8* vm, uint16_t opcode) {
 	vm->memory[I + 2] = vx % 10;
 }
 
-// Store from V0 to VX (including VX) in memory, starting at address I. I is increased by 1 for each value written.
+// Store from V0 to VX (including VX) in memory, starting at address I and increasing by 1 for each value written.
 void opcode_FX55(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	for (int i = 0; i <= x; i++)
-		vm->memory[vm->address_reg++] = vm->registers[i];
+		vm->memory[vm->address_reg+i] = vm->registers[i];
 }
 
-// Fill from V0 to VX (including VX) with values from memory, starting at address I. I is increased by 1 for each value read.
+// Fill from V0 to VX (including VX) with values from memory, starting at address I and increasing by 1 for each value read.
 void opcode_FX65(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	for (int i = 0; i <= x; i++)
-		vm->registers[i] = vm->memory[vm->address_reg++];
+		vm->registers[i] = vm->memory[vm->address_reg+i];
 }
 
 void cycle_vm(Chip8* vm) {
