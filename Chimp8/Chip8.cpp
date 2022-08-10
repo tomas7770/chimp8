@@ -401,3 +401,12 @@ void cycle_vm(Chip8* vm) {
 
 	vm->pc += 2;
 }
+
+void cycle_delaytimer(Chip8* vm, int& delay_metatimer) {
+	// 16 ms ~ 60 Hz
+	while (delay_metatimer >= 16) {
+		if (vm->delay_timer != 0)
+			vm->delay_timer -= 1;
+		delay_metatimer -= 16;
+	}
+}

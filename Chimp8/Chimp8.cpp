@@ -36,13 +36,18 @@ int main(int argc, char* args[]) {
 			init_vm(&vm);
 			load_rom(&vm, rom_file, &rom_size);
 			// Main loop
+			uint64_t frame_timestamp = SDL_GetTicks64();
+			int delay_metatimer = 0;
 			bool running = true;
 			while (running) {
 				while (SDL_PollEvent(&e) != 0) {
 					if (e.type == SDL_QUIT)
 						running = false;
 				}
+				delay_metatimer += SDL_GetTicks64() - frame_timestamp;
+				frame_timestamp = SDL_GetTicks64();
 				cycle_vm(&vm);
+				cycle_delaytimer(&vm, delay_metatimer);
 				draw_display(&vm, renderer);
 			}
 		}
