@@ -4,3 +4,4 @@
 *.vcxproj.user
 *.sln
 x64/
+*.ch8
