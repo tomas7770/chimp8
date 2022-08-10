@@ -285,7 +285,7 @@ void opcode_FX1E(Chip8* vm, uint16_t opcode) {
 void opcode_FX29(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	uint8_t vx = vm->registers[x];
-	vm->address_reg = vm->memory[FONT_ADDRESS + vx*5];
+	vm->address_reg = FONT_ADDRESS + vx*5;
 }
 
 // Store the binary-coded decimal representation of VX, with the most significant of
