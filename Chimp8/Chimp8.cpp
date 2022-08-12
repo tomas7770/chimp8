@@ -6,6 +6,12 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 
+#define CYCLE_RATE 1000
+#define MAX_CYCLES_PER_FRAME 100
+
+const uint64_t cycle_time = 1000000 / CYCLE_RATE;
+const uint64_t max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
+
 void draw_display(Chip8* vm, SDL_Renderer* renderer);
 
 int main(int argc, char* args[]) {
@@ -37,6 +43,7 @@ int main(int argc, char* args[]) {
 			load_rom(&vm, rom_file, &rom_size);
 			// Main loop
 			uint64_t frame_timestamp = SDL_GetTicks64();
+			uint64_t cycle_timer = 0; // in microseconds
 			int delay_metatimer = 0;
 			bool running = true;
 			while (running) {
@@ -44,9 +51,16 @@ int main(int argc, char* args[]) {
 					if (e.type == SDL_QUIT)
 						running = false;
 				}
-				delay_metatimer += SDL_GetTicks64() - frame_timestamp;
+				uint64_t delta_time = SDL_GetTicks64() - frame_timestamp;
+				cycle_timer += 1000 * delta_time;
+				if (cycle_timer > max_cycle_accum)
+					cycle_timer = max_cycle_accum;
+				delay_metatimer += delta_time;
 				frame_timestamp = SDL_GetTicks64();
-				cycle_vm(&vm);
+				while (cycle_timer >= cycle_time) {
+					cycle_vm(&vm);
+					cycle_timer -= cycle_time;
+				}
 				cycle_delaytimer(&vm, delay_metatimer);
 				draw_display(&vm, renderer);
 			}
