@@ -322,10 +322,8 @@ void cycle_vm(Chip8* vm) {
 	// Switch looks like it could get messy to tell apart the different types of opcode
 	if (opcode == 0x00E0)
 		opcode_00E0(vm);
-	else if (opcode == 0x00EE) {
+	else if (opcode == 0x00EE)
 		opcode_00EE(vm);
-		return;
-	}
 	else if (opcode_firstdigit == 0x1000) {
 		opcode_1NNN(vm, opcode);
 		return;
