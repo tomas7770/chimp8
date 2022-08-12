@@ -203,7 +203,8 @@ void opcode_CXNN(Chip8* vm, uint16_t opcode) {
 	vm->registers[x] = random_number & nn;
 }
 
-// Draw a sprite at (VX, VY), with width of 8 and height of N
+// Draw a sprite at (VX, VY), with width of 8 and height of N.
+// Sprites are XORed onto the existing screen.
 // Each row of 8 pixels is read as a byte starting from memory location I
 // VF is set to 1 if any screen pixels are flipped from 1 to 0, and to 0 if not
 void opcode_DXYN(Chip8* vm, uint16_t opcode) {
@@ -225,9 +226,9 @@ void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 		for (int j = 0; j < 8; j++) {
 			int screen_coord = init_screen_coord + j + i*SCREEN_W;
 			bool pixel = (row & mask) ? 1 : 0;
-			if (vm->display[screen_coord] && !pixel)
+			if (!(vm->display[screen_coord] ^ pixel))
 				vm->registers[0xF] = 1;
-			vm->display[screen_coord] = pixel;
+			vm->display[screen_coord] ^= pixel;
 			mask >>= 1;
 		}
 	}
