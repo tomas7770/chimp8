@@ -140,9 +140,8 @@ void opcode_8XY4(Chip8* vm, uint16_t opcode) {
 void opcode_8XY5(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	int y = (opcode & 0x00F0) >> 4;
-	// There's a borrow when a bit of register VX is 0 and the corresponding bit
-	// from register VY is 1
-	if (~(vm->registers[x]) & vm->registers[y])
+	// There's a borrow when VY > VX
+	if (vm->registers[y] > vm->registers[x])
 		vm->registers[0xF] = 0;
 	else
 		vm->registers[0xF] = 1;
@@ -160,9 +159,8 @@ void opcode_8XY6(Chip8* vm, uint16_t opcode) {
 void opcode_8XY7(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	int y = (opcode & 0x00F0) >> 4;
-	// There's a borrow when a bit of register VY is 0 and the corresponding bit
-	// from register VX is 1
-	if (vm->registers[x] & ~(vm->registers[y]))
+	// There's a borrow when VX > VY
+	if (vm->registers[x] > vm->registers[y])
 		vm->registers[0xF] = 0;
 	else
 		vm->registers[0xF] = 1;
