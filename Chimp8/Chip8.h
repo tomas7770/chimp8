@@ -57,5 +57,6 @@ void init_vm(Chip8* vm);
 void load_rom(Chip8* vm, void* rom_file, size_t* rom_size);
 void cycle_vm(Chip8* vm);
 void cycle_delaytimer(Chip8* vm, int& delay_metatimer);
+void on_keypress(Chip8*vm, int key);
 
 #endif

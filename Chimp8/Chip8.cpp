@@ -407,3 +407,11 @@ void cycle_delaytimer(Chip8* vm, int& delay_metatimer) {
 		delay_metatimer -= 16;
 	}
 }
+
+void on_keypress(Chip8* vm, int key) {
+	vm->keys[key] = true;
+	if (vm->halted_keypress) {
+		vm->halted_keypress = false;
+		vm->registers[vm->keypress_store_reg] = (uint8_t) key;
+	}
+}

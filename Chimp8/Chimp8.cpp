@@ -65,7 +65,7 @@ int main(int argc, char* args[]) {
 					else if (e.type == SDL_KEYDOWN) {
 						for (int i = 0; i < KEY_COUNT; i++) {
 							if (e.key.keysym.sym == keymap[i]) {
-								vm.keys[i] = true;
+								on_keypress(&vm, i);
 								break;
 							}
 						}
