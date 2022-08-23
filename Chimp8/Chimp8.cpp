@@ -15,10 +15,14 @@ const uint64_t max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
 void draw_display(Chip8* vm, SDL_Renderer* renderer);
 
 int main(int argc, char* args[]) {
+	if (argc < 1) {
+		std::cout << "Usage: Chimp8 <rom file>" << std::endl;
+		return 0;
+	}
 	// Initialize SDL
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
-	SDL_RWops* rom_file_rwops = SDL_RWFromFile("INVADERS.ch8", "r+b");
+	SDL_RWops* rom_file_rwops = SDL_RWFromFile(args[1], "r+b");
 	size_t rom_size;
 	void* rom_file = SDL_LoadFile_RW(rom_file_rwops, &rom_size, 1);
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
