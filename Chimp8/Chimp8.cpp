@@ -9,6 +9,14 @@
 #define CYCLE_RATE 1000
 #define MAX_CYCLES_PER_FRAME 100
 
+// SDL key codes for CHIP-8 keypad
+const SDL_Keycode keymap[KEY_COUNT] = {
+	SDLK_1, SDLK_2, SDLK_3, SDLK_4,
+	SDLK_q, SDLK_w, SDLK_e, SDLK_r,
+	SDLK_a, SDLK_s, SDLK_d, SDLK_f,
+	SDLK_z, SDLK_x, SDLK_c, SDLK_v
+};
+
 const uint64_t cycle_time = 1000000 / CYCLE_RATE;
 const uint64_t max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
 
@@ -54,6 +62,22 @@ int main(int argc, char* args[]) {
 				while (SDL_PollEvent(&e) != 0) {
 					if (e.type == SDL_QUIT)
 						running = false;
+					else if (e.type == SDL_KEYDOWN) {
+						for (int i = 0; i < KEY_COUNT; i++) {
+							if (e.key.keysym.sym == keymap[i]) {
+								vm.keys[i] = true;
+								break;
+							}
+						}
+					}
+					else if (e.type == SDL_KEYUP) {
+						for (int i = 0; i < KEY_COUNT; i++) {
+							if (e.key.keysym.sym == keymap[i]) {
+								vm.keys[i] = false;
+								break;
+							}
+						}
+					}
 				}
 				uint64_t delta_time = SDL_GetTicks64() - frame_timestamp;
 				cycle_timer += 1000 * delta_time;
