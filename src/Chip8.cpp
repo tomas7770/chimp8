@@ -224,7 +224,7 @@ void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 		for (int j = 0; j < 8; j++) {
 			int screen_coord = init_screen_coord + j + i*SCREEN_W;
 			bool pixel = (row & mask) ? 1 : 0;
-			if (!(vm->display[screen_coord] ^ pixel))
+			if (vm->display[screen_coord] && !(vm->display[screen_coord] ^ pixel))
 				vm->registers[0xF] = 1;
 			vm->display[screen_coord] ^= pixel;
 			mask >>= 1;
