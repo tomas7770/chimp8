@@ -5,3 +5,4 @@
 *.sln
 x64/
 *.ch8
+.vscode/
