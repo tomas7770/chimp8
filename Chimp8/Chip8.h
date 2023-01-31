@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstddef>
 
 #define MEM_SIZE 4096
 #define REG_COUNT 16
