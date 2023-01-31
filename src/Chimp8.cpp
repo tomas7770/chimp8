@@ -77,7 +77,7 @@ int main(int argc, char* args[]) {
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		WINDOW_WIDTH, WINDOW_HEIGHT,
-		SDL_WINDOW_SHOWN);
+		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 	if (window == NULL) {
 		std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		terminate(window, renderer, rom_file, -1);
@@ -88,6 +88,7 @@ int main(int argc, char* args[]) {
 		std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		terminate(window, renderer, rom_file, -1);
 	}
+	SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	// Event handler
 	SDL_Event e;
