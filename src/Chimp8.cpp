@@ -12,10 +12,10 @@
 
 // SDL key codes for CHIP-8 keypad
 const SDL_Keycode keymap[KEY_COUNT] = {
-	SDLK_1, SDLK_2, SDLK_3, SDLK_4,
-	SDLK_q, SDLK_w, SDLK_e, SDLK_r,
-	SDLK_a, SDLK_s, SDLK_d, SDLK_f,
-	SDLK_z, SDLK_x, SDLK_c, SDLK_v
+	SDLK_x, SDLK_1, SDLK_2, SDLK_3,
+	SDLK_q, SDLK_w, SDLK_e, SDLK_a,
+	SDLK_s, SDLK_d, SDLK_z, SDLK_c,
+	SDLK_4, SDLK_r, SDLK_f, SDLK_v
 };
 
 const uint64_t cycle_time = 1000000 / CYCLE_RATE;
