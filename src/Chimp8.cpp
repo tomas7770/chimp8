@@ -54,7 +54,7 @@ void draw_display(Chip8* vm, SDL_Renderer* renderer) {
 }
 
 int main(int argc, char* args[]) {
-	if (argc < 1) {
+	if (argc < 2) {
 		std::cout << "Usage: Chimp8 <rom file>" << std::endl;
 		return 0;
 	}
