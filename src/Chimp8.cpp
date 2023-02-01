@@ -1,13 +1,21 @@
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <cerrno>
 #include "Chip8.h"
 
 #define WINDOW_TITLE "Chimp8 - CHIP-8 Interpreter"
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 
-#define CYCLE_RATE 1000
+#define CONFIG_FOLDER_NAME "Chimp8"
+#define CONFIG_NAME "Chimp8.ini"
+
 #define MAX_CYCLES_PER_FRAME 100
 
 // SDL key codes for CHIP-8 keypad
@@ -18,8 +26,9 @@ const SDL_Keycode keymap[KEY_COUNT] = {
 	SDLK_4, SDLK_r, SDLK_f, SDLK_v
 };
 
-const uint64_t cycle_time = 1000000 / CYCLE_RATE;
-const uint64_t max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
+uint64_t cycle_rate = 1000;
+uint64_t cycle_time;
+uint64_t max_cycle_accum;
 
 void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, int error_code) {
 	if (window)
@@ -30,6 +39,65 @@ void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, int e
 		SDL_free(rom_file);
 	SDL_Quit();
 	std::exit(error_code);
+}
+
+std::shared_ptr<std::fstream> load_config() {
+	std::shared_ptr<std::fstream> config = std::make_shared<std::fstream>();
+
+	#ifdef _WIN32
+	config->open(CONFIG_NAME, std::ios::in);
+	#else
+	std::string config_home;
+	
+	if (const char* config_home_raw = std::getenv("XDG_CONFIG_HOME")) {
+		config_home = std::string(config_home_raw);
+	}
+	else {
+		if (const char* user_home = std::getenv("HOME")) {
+			config_home = std::string(user_home) + "/.config";
+		}
+		else {
+			std::cout << "Error loading config. Default settings will be used.\n";
+			return NULL;
+		}
+	}
+
+	std::string config_path = config_home + "/" + CONFIG_FOLDER_NAME + "/" + CONFIG_NAME;
+	config->open(config_path, std::ios::in);
+	#endif
+
+	if (config->fail()) {
+		if (errno == ENOENT)
+			std::cout << "Config not found. Default settings will be used.\n";
+		else
+			std::cout << "Error loading config. Default settings will be used.\n";
+		return NULL;
+	}
+	return config;
+}
+
+void parse_config(std::shared_ptr<std::fstream> config) {
+	if (config) {
+		std::string line, key, value;
+		while (std::getline(*config, line)) {
+			line.erase(std::remove_if(line.begin(), line.end(),
+				[](unsigned char x){ return std::isspace(x); }), line.end());
+
+			int eq_pos = line.find("=");
+			if (eq_pos == std::string::npos || line.length() <= eq_pos + 1)
+				continue;
+			key = line.substr(0, eq_pos);
+			value = line.substr(eq_pos + 1);
+			
+			if (key == "cycles") {
+				try {
+					cycle_rate = std::min(std::stoul(value), 1000000UL);
+				} catch (...) {}
+			}
+		}
+	}
+	cycle_time = 1000000 / cycle_rate;
+	max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
 }
 
 void draw_display(Chip8* vm, SDL_Renderer* renderer) {
@@ -58,6 +126,12 @@ int main(int argc, char* args[]) {
 		std::cout << "Usage: Chimp8 <rom file>" << std::endl;
 		return 0;
 	}
+	// Config
+	{
+		std::shared_ptr<std::fstream> config = load_config();
+		parse_config(config);
+	}
+
 	// Initialize SDL
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
