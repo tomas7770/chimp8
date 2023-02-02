@@ -208,10 +208,9 @@ void opcode_CXNN(Chip8* vm, uint16_t opcode) {
 void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	int y = (opcode & 0x00F0) >> 4;
-	uint8_t vx = vm->registers[x];
-	uint8_t vy = vm->registers[y];
+	uint8_t vx = (vm->registers[x]) % SCREEN_W;
+	uint8_t vy = (vm->registers[y]) % SCREEN_H;
 
-	int init_screen_coord = vx + vy * SCREEN_W;
 	uint8_t n = opcode & 0xF;
 	uint16_t I = vm->address_reg;
 	uint8_t row;
@@ -222,7 +221,7 @@ void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 		row = vm->memory[I++];
 		int mask = 0x80;
 		for (int j = 0; j < 8; j++) {
-			int screen_coord = init_screen_coord + j + i*SCREEN_W;
+			int screen_coord = (vx + j) % SCREEN_W + ((vy + i) % SCREEN_H)*SCREEN_W;
 			bool pixel = (row & mask) ? 1 : 0;
 			if (vm->display[screen_coord] && !(vm->display[screen_coord] ^ pixel))
 				vm->registers[0xF] = 1;
