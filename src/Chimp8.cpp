@@ -29,12 +29,12 @@
 
 #define MAX_CYCLES_PER_FRAME 100
 
-// SDL key codes for CHIP-8 keypad
-const SDL_Keycode keymap[KEY_COUNT] = {
-	SDLK_x, SDLK_1, SDLK_2, SDLK_3,
-	SDLK_q, SDLK_w, SDLK_e, SDLK_a,
-	SDLK_s, SDLK_d, SDLK_z, SDLK_c,
-	SDLK_4, SDLK_r, SDLK_f, SDLK_v
+// SDL keys for CHIP-8 keypad
+const SDL_Scancode keymap[KEY_COUNT] = {
+	SDL_SCANCODE_X, SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
+	SDL_SCANCODE_Q, SDL_SCANCODE_W, SDL_SCANCODE_E, SDL_SCANCODE_A,
+	SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_Z, SDL_SCANCODE_C,
+	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
 
 uint64_t cycle_rate = 1000;
@@ -208,7 +208,7 @@ int main(int argc, char* args[]) {
 				running = false;
 			else if (e.type == SDL_KEYDOWN) {
 				for (int i = 0; i < KEY_COUNT; i++) {
-					if (e.key.keysym.sym == keymap[i]) {
+					if (e.key.keysym.scancode == keymap[i]) {
 						on_keypress(&vm, i);
 						break;
 					}
@@ -216,7 +216,7 @@ int main(int argc, char* args[]) {
 			}
 			else if (e.type == SDL_KEYUP) {
 				for (int i = 0; i < KEY_COUNT; i++) {
-					if (e.key.keysym.sym == keymap[i]) {
+					if (e.key.keysym.scancode == keymap[i]) {
 						vm.keys[i] = false;
 						break;
 					}
