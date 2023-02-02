@@ -117,7 +117,7 @@ void parse_config(std::shared_ptr<std::fstream> config) {
 			}
 			else if (key == "sound_buffer") {
 				try {
-					sound_buffer_size = std::clamp(std::stoi(value), 0, MAX_SOUND_BUFFER);
+					sound_buffer_size = std::max(0, std::min(std::stoi(value), MAX_SOUND_BUFFER));
 				} catch (...) {}
 			}
 		}
