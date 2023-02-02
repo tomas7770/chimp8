@@ -9,12 +9,21 @@
 #include <cerrno>
 #include "Chip8.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #define WINDOW_TITLE "Chimp8 - CHIP-8 Interpreter"
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 
 #define CONFIG_FOLDER_NAME "Chimp8"
 #define CONFIG_NAME "Chimp8.ini"
+
+#define IDLE_SLEEP 1000
+#define WIN_IDLE_SLEEP 1
 
 #define MAX_CYCLES_PER_FRAME 100
 
@@ -208,6 +217,11 @@ int main(int argc, char* args[]) {
 		}
 		cycle_delaytimer(&vm, delay_metatimer);
 		draw_display(&vm, renderer);
+		#ifdef _WIN32
+		Sleep(WIN_IDLE_SLEEP);
+		#else
+		usleep(IDLE_SLEEP);
+		#endif
 	}
 
 	terminate(window, renderer, rom_file, 0);
