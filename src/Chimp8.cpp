@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -18,6 +19,7 @@
 #define WINDOW_TITLE "Chimp8 - CHIP-8 Interpreter"
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
+#define SOUND_EFFECT "res/beep.wav"
 
 #define CONFIG_FOLDER_NAME "Chimp8"
 #define CONFIG_NAME "Chimp8.ini"
@@ -39,13 +41,16 @@ uint64_t cycle_rate = 1000;
 uint64_t cycle_time;
 uint64_t max_cycle_accum;
 
-void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, int error_code) {
+void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_Chunk* beep, int error_code) {
 	if (window)
 		SDL_DestroyWindow(window);
 	if (renderer)
 		SDL_DestroyRenderer(renderer);
 	if (rom_file)
 		SDL_free(rom_file);
+	if (beep)
+		Mix_FreeChunk(beep);
+	Mix_Quit();
 	SDL_Quit();
 	std::exit(error_code);
 }
@@ -150,12 +155,12 @@ int main(int argc, char* args[]) {
 
 	if (rom_file == NULL) {
 		std::cout << "ROM could not be loaded! SDL_Error: " << SDL_GetError() << std::endl;
-		terminate(window, renderer, rom_file, -1);
+		terminate(window, renderer, rom_file, NULL, -1);
 	}
 	
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
 		std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-		terminate(window, renderer, rom_file, -1);
+		terminate(window, renderer, rom_file, NULL, -1);
 	}
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -163,15 +168,27 @@ int main(int argc, char* args[]) {
 		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 	if (window == NULL) {
 		std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-		terminate(window, renderer, rom_file, -1);
+		terminate(window, renderer, rom_file, NULL, -1);
 	}
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL) {
 		std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-		terminate(window, renderer, rom_file, -1);
+		terminate(window, renderer, rom_file, NULL, -1);
 	}
 	SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	// Initialize SDL_mixer
+	Mix_Chunk* beep = NULL;
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 1024) < 0) {
+		std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
+		terminate(window, renderer, rom_file, beep, -1);
+	}
+	beep = Mix_LoadWAV(SOUND_EFFECT);
+	if (beep == NULL) {
+		std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
+		terminate(window, renderer, rom_file, beep, -1);
+	}
 
 	// Event handler
 	SDL_Event e;
@@ -183,6 +200,7 @@ int main(int argc, char* args[]) {
 	uint64_t frame_timestamp = SDL_GetTicks64();
 	uint64_t cycle_timer = 0; // in microseconds
 	int delay_metatimer = 0;
+	int sound_metatimer = 0;
 	bool running = true;
 	while (running) {
 		while (SDL_PollEvent(&e) != 0) {
@@ -210,12 +228,20 @@ int main(int argc, char* args[]) {
 		if (cycle_timer > max_cycle_accum)
 			cycle_timer = max_cycle_accum;
 		delay_metatimer += delta_time;
+		sound_metatimer += delta_time;
 		frame_timestamp = SDL_GetTicks64();
 		while (cycle_timer >= cycle_time) {
 			cycle_vm(&vm);
 			cycle_timer -= cycle_time;
 		}
 		cycle_delaytimer(&vm, delay_metatimer);
+		uint8_t sound_timer = cycle_soundtimer(&vm, sound_metatimer);
+		if (sound_timer > 0 && !Mix_Playing(0)) {
+			Mix_PlayChannel(0, beep, -1);
+		}
+		else if (sound_timer == 0 && Mix_Playing(0)) {
+			Mix_HaltChannel(0);
+		}
 		draw_display(&vm, renderer);
 		#ifdef _WIN32
 		Sleep(WIN_IDLE_SLEEP);
@@ -224,6 +250,6 @@ int main(int argc, char* args[]) {
 		#endif
 	}
 
-	terminate(window, renderer, rom_file, 0);
+	terminate(window, renderer, rom_file, beep, 0);
 	return 0;
 }

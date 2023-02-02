@@ -406,6 +406,16 @@ void cycle_delaytimer(Chip8* vm, int& delay_metatimer) {
 	}
 }
 
+uint8_t cycle_soundtimer(Chip8* vm, int& sound_metatimer) {
+	// 16 ms ~ 60 Hz
+	while (sound_metatimer >= 16) {
+		if (vm->sound_timer != 0)
+			vm->sound_timer -= 1;
+		sound_metatimer -= 16;
+	}
+	return vm->sound_timer;
+}
+
 void on_keypress(Chip8* vm, int key) {
 	vm->keys[key] = true;
 	if (vm->halted_keypress) {
