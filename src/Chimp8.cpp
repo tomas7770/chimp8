@@ -20,6 +20,7 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 #define SOUND_EFFECT "res/beep.wav"
+#define MAX_SOUND_BUFFER 65536
 
 #define CONFIG_FOLDER_NAME "Chimp8"
 #define CONFIG_NAME "Chimp8.ini"
@@ -40,6 +41,9 @@ const SDL_Scancode keymap[KEY_COUNT] = {
 uint64_t cycle_rate = 1000;
 uint64_t cycle_time;
 uint64_t max_cycle_accum;
+
+bool sound_enabled = true;
+int sound_buffer_size = 1024;
 
 void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_Chunk* beep, int error_code) {
 	if (window)
@@ -106,6 +110,14 @@ void parse_config(std::shared_ptr<std::fstream> config) {
 			if (key == "cycles") {
 				try {
 					cycle_rate = std::min(std::stoul(value), 1000000UL);
+				} catch (...) {}
+			}
+			else if (key == "sound" && value == "false") {
+				sound_enabled = false;
+			}
+			else if (key == "sound_buffer") {
+				try {
+					sound_buffer_size = std::clamp(std::stoi(value), 0, MAX_SOUND_BUFFER);
 				} catch (...) {}
 			}
 		}
@@ -180,14 +192,16 @@ int main(int argc, char* args[]) {
 
 	// Initialize SDL_mixer
 	Mix_Chunk* beep = NULL;
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 1024) < 0) {
-		std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
-		terminate(window, renderer, rom_file, beep, -1);
-	}
-	beep = Mix_LoadWAV(SOUND_EFFECT);
-	if (beep == NULL) {
-		std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
-		terminate(window, renderer, rom_file, beep, -1);
+	if (sound_enabled) {
+		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, sound_buffer_size) < 0) {
+			std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
+			terminate(window, renderer, rom_file, beep, -1);
+		}
+		beep = Mix_LoadWAV(SOUND_EFFECT);
+		if (beep == NULL) {
+			std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
+			terminate(window, renderer, rom_file, beep, -1);
+		}
 	}
 
 	// Event handler
@@ -236,11 +250,13 @@ int main(int argc, char* args[]) {
 		}
 		cycle_delaytimer(&vm, delay_metatimer);
 		uint8_t sound_timer = cycle_soundtimer(&vm, sound_metatimer);
-		if (sound_timer > 0 && !Mix_Playing(0)) {
-			Mix_PlayChannel(0, beep, -1);
-		}
-		else if (sound_timer == 0 && Mix_Playing(0)) {
-			Mix_HaltChannel(0);
+		if (sound_enabled) {
+			if (sound_timer > 0 && !Mix_Playing(0)) {
+				Mix_PlayChannel(0, beep, -1);
+			}
+			else if (sound_timer == 0 && Mix_Playing(0)) {
+				Mix_HaltChannel(0);
+			}
 		}
 		draw_display(&vm, renderer);
 		#ifdef _WIN32
