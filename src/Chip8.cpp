@@ -149,10 +149,19 @@ void opcode_8XY5(Chip8* vm, uint16_t opcode) {
 }
 
 // Store the least significant bit of VX in VF, shift VX to the right by 1
+// Legacy: Store the least significant bit of VY in VF, shift VY to the right by 1, store result in VX
 void opcode_8XY6(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	vm->registers[0xF] = vm->registers[x] & 0x1;
-	vm->registers[x] >>= 1;
+	if (vm->legacy_shift) {
+		int y = (opcode & 0x00F0) >> 4;
+		vm->registers[0xF] = vm->registers[y] & 0x1;
+		vm->registers[y] >>= 1;
+		vm->registers[x] = vm->registers[y];
+	}
+	else {
+		vm->registers[0xF] = vm->registers[x] & 0x1;
+		vm->registers[x] >>= 1;
+	}
 }
 
 // Set VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there is not.
@@ -168,10 +177,19 @@ void opcode_8XY7(Chip8* vm, uint16_t opcode) {
 }
 
 // Store the most significant bit of VX in VF, shift VX to the left by 1
+// Legacy: Store the most significant bit of VY in VF, shift VY to the left by 1, store result in VX
 void opcode_8XYE(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	vm->registers[0xF] = (vm->registers[x] & 0x80) >> 7;
-	vm->registers[x] <<= 1;
+	if (vm->legacy_shift) {
+		int y = (opcode & 0x00F0) >> 4;
+		vm->registers[0xF] = (vm->registers[y] & 0x80) >> 7;
+		vm->registers[y] <<= 1;
+		vm->registers[x] = vm->registers[y];
+	}
+	else {
+		vm->registers[0xF] = (vm->registers[x] & 0x80) >> 7;
+		vm->registers[x] <<= 1;
+	}
 }
 
 // Skip next instruction if VX != VY
@@ -298,15 +316,19 @@ void opcode_FX33(Chip8* vm, uint16_t opcode) {
 // Store from V0 to VX (including VX) in memory, starting at address I and increasing by 1 for each value written.
 void opcode_FX55(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	for (int i = 0; i <= x; i++)
-		vm->memory[vm->address_reg+i] = vm->registers[i];
+	for (int i = 0; i <= x; i++) {
+		uint16_t address = vm->legacy_memops ? vm->address_reg++ : vm->address_reg+i;
+		vm->memory[address] = vm->registers[i];
+	}
 }
 
 // Fill from V0 to VX (including VX) with values from memory, starting at address I and increasing by 1 for each value read.
 void opcode_FX65(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
-	for (int i = 0; i <= x; i++)
-		vm->registers[i] = vm->memory[vm->address_reg+i];
+	for (int i = 0; i <= x; i++) {
+		uint16_t address = vm->legacy_memops ? vm->address_reg++ : vm->address_reg+i;
+		vm->registers[i] = vm->memory[address];
+	}
 }
 
 void cycle_vm(Chip8* vm) {

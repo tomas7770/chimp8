@@ -32,6 +32,11 @@ typedef struct {
 	bool halted_keypress;
 	// Indicates which register will store the key pressed
 	int keypress_store_reg;
+
+	// Flag for original CHIP-8 8XY6 and 8XYE opcode behavior (if false, use SCHIP behavior)
+	bool legacy_shift = false;
+	// Flag for original CHIP-8 FX55 and FX65 opcode behavior (if false, use SCHIP behavior)
+	bool legacy_memops = false;
 } Chip8;
 
 const uint8_t chip8_fontset[80] =

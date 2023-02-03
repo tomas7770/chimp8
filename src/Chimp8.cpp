@@ -94,7 +94,7 @@ std::shared_ptr<std::fstream> load_config() {
 	return config;
 }
 
-void parse_config(std::shared_ptr<std::fstream> config) {
+void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 	if (config) {
 		std::string line, key, value;
 		while (std::getline(*config, line)) {
@@ -119,6 +119,12 @@ void parse_config(std::shared_ptr<std::fstream> config) {
 				try {
 					sound_buffer_size = std::max(0, std::min(std::stoi(value), MAX_SOUND_BUFFER));
 				} catch (...) {}
+			}
+			else if (key == "legacy_memops" && value == "true") {
+				vm->legacy_memops = true;
+			}
+			else if (key == "legacy_shift" && value == "true") {
+				vm->legacy_shift = true;
 			}
 		}
 	}
@@ -152,10 +158,15 @@ int main(int argc, char* args[]) {
 		std::cout << "Usage: Chimp8 <rom file>" << std::endl;
 		return 0;
 	}
+
+	// Create VM
+	Chip8 vm;
+	init_vm(&vm);
+
 	// Config
 	{
 		std::shared_ptr<std::fstream> config = load_config();
-		parse_config(config);
+		parse_config(config, &vm);
 	}
 
 	// Initialize SDL
@@ -206,9 +217,7 @@ int main(int argc, char* args[]) {
 
 	// Event handler
 	SDL_Event e;
-	// VM
-	Chip8 vm;
-	init_vm(&vm);
+	// Load rom from file into VM
 	load_rom(&vm, rom_file, &rom_size);
 	// Main loop
 	uint64_t frame_timestamp = SDL_GetTicks64();
