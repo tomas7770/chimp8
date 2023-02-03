@@ -30,7 +30,7 @@ typedef struct {
 
 	// This is for blocking opcode FX0A
 	bool halted_keypress;
-	// Register where to store key pressed
+	// Indicates which register will store the key pressed
 	int keypress_store_reg;
 } Chip8;
 
