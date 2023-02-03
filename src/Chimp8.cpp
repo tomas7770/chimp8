@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <stdexcept>
 #include <cctype>
 #include <cstdlib>
 #include <cerrno>
@@ -59,11 +60,9 @@ void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_C
 	std::exit(error_code);
 }
 
-std::shared_ptr<std::fstream> load_config() {
-	std::shared_ptr<std::fstream> config = std::make_shared<std::fstream>();
-
+std::string get_config_path() {
 	#ifdef _WIN32
-	config->open(CONFIG_NAME, std::ios::in);
+	return CONFIG_NAME;
 	#else
 	std::string config_home;
 	
@@ -75,15 +74,24 @@ std::shared_ptr<std::fstream> load_config() {
 			config_home = std::string(user_home) + "/.config";
 		}
 		else {
-			std::cout << "Error loading config. Default settings will be used.\n";
-			return NULL;
+			throw std::runtime_error("Couldn't find appropriate location to load config");
 		}
 	}
 
 	std::string config_path = config_home + "/" + CONFIG_FOLDER_NAME + "/" + CONFIG_NAME;
-	config->open(config_path, std::ios::in);
+	return config_path;
 	#endif
+}
 
+std::shared_ptr<std::fstream> load_config() {
+	std::shared_ptr<std::fstream> config = std::make_shared<std::fstream>();
+	try {
+		config->open(get_config_path(), std::ios::in);
+	}
+	catch (std::runtime_error) {
+		std::cout << "Error loading config. Default settings will be used.\n";
+		return NULL;
+	}
 	if (config->fail()) {
 		if (errno == ENOENT)
 			std::cout << "Config not found. Default settings will be used.\n";
