@@ -16,6 +16,7 @@
 #include <shlwapi.h>
 #else
 #include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 #define WINDOW_TITLE "Chimp8 - CHIP-8 Interpreter"
@@ -61,7 +62,7 @@ void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_C
 	std::exit(error_code);
 }
 
-std::string get_config_path() {
+std::string get_program_path() {
 #ifdef _WIN32
 	WCHAR program_path[MAX_PATH];
 	GetModuleFileNameW(NULL, program_path, MAX_PATH);
@@ -70,7 +71,21 @@ std::string get_config_path() {
 	char program_path_conv[MAX_PATH];
 	WideCharToMultiByte(CP_UTF8, 0, program_path, -1, program_path_conv, MAX_PATH, NULL, NULL);
 
-	std::string config_path = std::string(program_path_conv) + "\\" + CONFIG_NAME;
+	return std::string(program_path_conv);
+#else
+	char program_path[PATH_MAX];
+	if (readlink("/proc/self/exe", program_path, PATH_MAX) == -1) {
+		throw std::runtime_error("Couldn't find program path");
+	}
+
+	std::string program_path_str(program_path);
+	return program_path_str.substr(0, program_path_str.find_last_of("/"));
+#endif
+}
+
+std::string get_config_path() {
+#ifdef _WIN32
+	std::string config_path = get_program_path() + "\\" + CONFIG_NAME;
 	return config_path;
 #else
 	std::string config_home;
@@ -225,7 +240,7 @@ int main(int argc, char* args[]) {
 			std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
 			terminate(window, renderer, rom_file, beep, -1);
 		}
-		beep = Mix_LoadWAV(SOUND_EFFECT);
+		beep = Mix_LoadWAV((get_program_path() + "/" + SOUND_EFFECT).c_str());
 		if (beep == NULL) {
 			std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
 			terminate(window, renderer, rom_file, beep, -1);
