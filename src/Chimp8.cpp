@@ -13,6 +13,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <shlwapi.h>
 #else
 #include <unistd.h>
 #endif
@@ -61,9 +62,17 @@ void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_C
 }
 
 std::string get_config_path() {
-	#ifdef _WIN32
-	return CONFIG_NAME;
-	#else
+#ifdef _WIN32
+	WCHAR program_path[MAX_PATH];
+	GetModuleFileNameW(NULL, program_path, MAX_PATH);
+	PathRemoveFileSpecW(program_path);
+
+	char program_path_conv[MAX_PATH];
+	WideCharToMultiByte(CP_UTF8, 0, program_path, -1, program_path_conv, MAX_PATH, NULL, NULL);
+
+	std::string config_path = std::string(program_path_conv) + "\\" + CONFIG_NAME;
+	return config_path;
+#else
 	std::string config_home;
 	
 	if (const char* config_home_raw = std::getenv("XDG_CONFIG_HOME")) {
@@ -80,7 +89,7 @@ std::string get_config_path() {
 
 	std::string config_path = config_home + "/" + CONFIG_FOLDER_NAME + "/" + CONFIG_NAME;
 	return config_path;
-	#endif
+#endif
 }
 
 std::shared_ptr<std::fstream> load_config() {
