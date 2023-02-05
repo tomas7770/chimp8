@@ -42,7 +42,7 @@ enum ConfigStatus {
 ConfigStatus config_status;
 
 // SDL keys for CHIP-8 keypad
-const SDL_Scancode keymap[KEY_COUNT] = {
+const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_X, SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
 	SDL_SCANCODE_Q, SDL_SCANCODE_W, SDL_SCANCODE_E, SDL_SCANCODE_A,
 	SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_Z, SDL_SCANCODE_C,
@@ -199,12 +199,12 @@ void draw_display(Chip8* vm, SDL_Renderer* renderer) {
 	SDL_RenderClear(renderer);
 
 	// Draw display
-	int x_scale = WINDOW_WIDTH / SCREEN_W;
-	int y_scale = WINDOW_HEIGHT / SCREEN_H;
-	for (int i = 0; i < SCREEN_SIZE; i++) {
+	int x_scale = WINDOW_WIDTH / screen_w;
+	int y_scale = WINDOW_HEIGHT / screen_h;
+	for (int i = 0; i < screen_size; i++) {
 		if (vm->display[i]) {
 			// Render white filled quad
-			SDL_Rect fill_rect = { (i % SCREEN_W) * x_scale, (i / SCREEN_W) * y_scale, x_scale, y_scale };
+			SDL_Rect fill_rect = { (i % screen_w) * x_scale, (i / screen_w) * y_scale, x_scale, y_scale };
 			SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 			SDL_RenderFillRect(renderer, &fill_rect);
 		}
@@ -301,7 +301,7 @@ int main(int argc, char* args[]) {
 			if (e.type == SDL_QUIT)
 				running = false;
 			else if (e.type == SDL_KEYDOWN) {
-				for (int i = 0; i < KEY_COUNT; i++) {
+				for (int i = 0; i < key_count; i++) {
 					if (e.key.keysym.scancode == keymap[i]) {
 						on_keypress(&vm, i);
 						break;
@@ -309,7 +309,7 @@ int main(int argc, char* args[]) {
 				}
 			}
 			else if (e.type == SDL_KEYUP) {
-				for (int i = 0; i < KEY_COUNT; i++) {
+				for (int i = 0; i < key_count; i++) {
 					if (e.key.keysym.scancode == keymap[i]) {
 						vm.keys[i] = false;
 						break;

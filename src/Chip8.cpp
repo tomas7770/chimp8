@@ -4,34 +4,34 @@
 void load_fontset(Chip8* vm);
 
 void init_vm(Chip8* vm) {
-	for (int i = 0; i < MEM_SIZE; i++)
+	for (int i = 0; i < mem_size; i++)
 		vm->memory[i] = 0;
 	load_fontset(vm);
-	for (int i = 0; i < REG_COUNT; i++)
+	for (int i = 0; i < reg_count; i++)
 		vm->registers[i] = 0;
 	vm->address_reg = 0;
-	for (int i = 0; i < STACK_DEPTH; i++)
+	for (int i = 0; i < stack_depth; i++)
 		vm->stack[i] = 0;
 	vm->sp = 0;
 	vm->pc = 0x200;
 	vm->delay_timer = 0;
 	vm->sound_timer = 0;
-	for (int i = 0; i < KEY_COUNT; i++)
+	for (int i = 0; i < key_count; i++)
 		vm->keys[i] = 0;
-	for (int i = 0; i < SCREEN_SIZE; i++)
+	for (int i = 0; i < screen_size; i++)
 		vm->display[i] = 0;
 	vm->halted_keypress = false;
 }
 
 void load_fontset(Chip8* vm) {
 	for (int i = 0; i < 80; i++)
-		vm->memory[i + FONT_ADDRESS] = chip8_fontset[i];
+		vm->memory[i + font_address] = chip8_fontset[i];
 }
 
 void load_rom(Chip8* vm, void* rom_file, size_t* rom_size) {
 	int i = 0;
 	uint8_t* rom_by_byte = (uint8_t*)rom_file;
-	while ((i < *rom_size) && (i + 0x200 < MEM_SIZE)) {
+	while ((i < *rom_size) && (i + 0x200 < mem_size)) {
 		vm->memory[i + 0x200] = rom_by_byte[i];
 		i++;
 	}
@@ -39,7 +39,7 @@ void load_rom(Chip8* vm, void* rom_file, size_t* rom_size) {
 
 // Clear display
 void opcode_00E0(Chip8* vm) {
-	for (int i = 0; i < SCREEN_SIZE; i++)
+	for (int i = 0; i < screen_size; i++)
 		vm->display[i] = 0;
 }
 
@@ -226,8 +226,8 @@ void opcode_CXNN(Chip8* vm, uint16_t opcode) {
 void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	int y = (opcode & 0x00F0) >> 4;
-	uint8_t vx = (vm->registers[x]) % SCREEN_W;
-	uint8_t vy = (vm->registers[y]) % SCREEN_H;
+	uint8_t vx = (vm->registers[x]) % screen_w;
+	uint8_t vy = (vm->registers[y]) % screen_h;
 
 	uint8_t n = opcode & 0xF;
 	uint16_t I = vm->address_reg;
@@ -239,7 +239,7 @@ void opcode_DXYN(Chip8* vm, uint16_t opcode) {
 		row = vm->memory[I++];
 		int mask = 0x80;
 		for (int j = 0; j < 8; j++) {
-			int screen_coord = (vx + j) % SCREEN_W + ((vy + i) % SCREEN_H)*SCREEN_W;
+			int screen_coord = (vx + j) % screen_w + ((vy + i) % screen_h)*screen_w;
 			bool pixel = (row & mask) ? 1 : 0;
 			if (vm->display[screen_coord] && !(vm->display[screen_coord] ^ pixel))
 				vm->registers[0xF] = 1;
@@ -299,7 +299,7 @@ void opcode_FX1E(Chip8* vm, uint16_t opcode) {
 void opcode_FX29(Chip8* vm, uint16_t opcode) {
 	int x = (opcode & 0x0F00) >> 8;
 	uint8_t vx = vm->registers[x];
-	vm->address_reg = FONT_ADDRESS + vx*5;
+	vm->address_reg = font_address + vx*5;
 }
 
 // Store the binary-coded decimal representation of VX, with the most significant of

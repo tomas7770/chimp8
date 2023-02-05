@@ -1,32 +1,32 @@
-#include <cstdint>
-#include <cstddef>
-
-#define MEM_SIZE 4096
-#define REG_COUNT 16
-#define STACK_DEPTH 16
-#define KEY_COUNT 16
-#define SCREEN_W 64
-#define SCREEN_H 32
-#define SCREEN_SIZE (SCREEN_W * SCREEN_H)
-#define FONT_ADDRESS 0x50
-
 #ifndef CHIP8_H
 #define CHIP8_H
 
+#include <cstdint>
+#include <cstddef>
+
+constexpr int mem_size = 4096;
+constexpr int reg_count = 16;
+constexpr int stack_depth = 16;
+constexpr int key_count = 16;
+constexpr int screen_w = 64;
+constexpr int screen_h = 32;
+constexpr int screen_size = screen_w * screen_h;
+constexpr int font_address = 0x50;
+
 typedef struct {
-	uint8_t memory[MEM_SIZE];
-	uint8_t registers[REG_COUNT];
+	uint8_t memory[mem_size];
+	uint8_t registers[reg_count];
 	// 'I' register
 	uint16_t address_reg;
-	uint16_t stack[STACK_DEPTH];
+	uint16_t stack[stack_depth];
 	// Stack pointer
 	uint16_t sp;
 	// Program counter
 	uint16_t pc;
 	uint8_t delay_timer;
 	uint8_t sound_timer;
-	bool keys[KEY_COUNT];
-	bool display[SCREEN_SIZE];
+	bool keys[key_count];
+	bool display[screen_size];
 
 	// This is for blocking opcode FX0A
 	bool halted_keypress;
