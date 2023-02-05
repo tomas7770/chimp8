@@ -33,6 +33,14 @@
 
 #define MAX_CYCLES_PER_FRAME 100
 
+enum ConfigStatus {
+	CONFIG_LOADED,
+	CONFIG_NOENT,
+	CONFIG_ERROR,
+};
+
+ConfigStatus config_status;
+
 // SDL keys for CHIP-8 keypad
 const SDL_Scancode keymap[KEY_COUNT] = {
 	SDL_SCANCODE_X, SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
@@ -107,22 +115,23 @@ std::string get_config_path() {
 #endif
 }
 
-std::shared_ptr<std::fstream> load_config() {
+std::shared_ptr<std::fstream> load_config(bool write_mode) {
 	std::shared_ptr<std::fstream> config = std::make_shared<std::fstream>();
 	try {
-		config->open(get_config_path(), std::ios::in);
+		config->open(get_config_path(), write_mode ? (std::ios::out | std::ios::trunc) : std::ios::in);
 	}
 	catch (std::runtime_error) {
-		std::cout << "Error loading config. Default settings will be used.\n";
+		config_status = CONFIG_ERROR;
 		return NULL;
 	}
 	if (config->fail()) {
 		if (errno == ENOENT)
-			std::cout << "Config not found. Default settings will be used.\n";
+			config_status = CONFIG_NOENT;
 		else
-			std::cout << "Error loading config. Default settings will be used.\n";
+			config_status = CONFIG_ERROR;
 		return NULL;
 	}
+	config_status = CONFIG_LOADED;
 	return config;
 }
 
@@ -164,6 +173,26 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 	max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
 }
 
+std::string bool_to_str(bool b) { return b ? "true" : "false";}
+
+void write_config_line(std::shared_ptr<std::fstream> config, std::string key, std::string value) {
+	std::string line = key + "=" + value + "\n";
+	config->write(line.c_str(), line.length());
+}
+
+void write_config(Chip8* vm) {
+	std::shared_ptr<std::fstream> config = load_config(true);
+	if (!config) {
+		std::cout << "Failed to write config.\n";
+		return;
+	}
+	write_config_line(config, "cycles", std::to_string(cycle_rate));
+	write_config_line(config, "sound", bool_to_str(sound_enabled));
+	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
+	write_config_line(config, "legacy_memops", bool_to_str(vm->legacy_memops));
+	write_config_line(config, "legacy_shift", bool_to_str(vm->legacy_shift));
+}
+
 void draw_display(Chip8* vm, SDL_Renderer* renderer) {
 	// Clear screen
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
@@ -197,8 +226,18 @@ int main(int argc, char* args[]) {
 
 	// Config
 	{
-		std::shared_ptr<std::fstream> config = load_config();
+		std::shared_ptr<std::fstream> config = load_config(false);
+		switch (config_status) {
+			case CONFIG_NOENT:
+				std::cout << "Config not found. Default settings will be used, and a config file will be created.\n";
+				break;
+			case CONFIG_ERROR:
+				std::cout << "Error loading config. Default settings will be used.\n";
+				break;
+		}
 		parse_config(config, &vm);
+		if (config_status != CONFIG_ERROR)
+			write_config(&vm);
 	}
 
 	// Initialize SDL
