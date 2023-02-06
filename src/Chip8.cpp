@@ -436,20 +436,20 @@ void Chip8::cycle_vm() {
 }
 
 void Chip8::cycle_delaytimer(int& delay_metatimer) {
-	// 16 ms ~ 60 Hz
-	while (delay_metatimer >= 16) {
+	// 17 ms ~ 60 Hz
+	while (delay_metatimer >= 17) {
 		if (delay_timer != 0)
 			delay_timer -= 1;
-		delay_metatimer -= 16;
+		delay_metatimer -= 17;
 	}
 }
 
 uint8_t Chip8::cycle_soundtimer(int& sound_metatimer) {
-	// 16 ms ~ 60 Hz
-	while (sound_metatimer >= 16) {
+	// 17 ms ~ 60 Hz
+	while (sound_metatimer >= 17) {
 		if (sound_timer != 0)
 			sound_timer -= 1;
-		sound_metatimer -= 16;
+		sound_metatimer -= 17;
 	}
 	return sound_timer;
 }
