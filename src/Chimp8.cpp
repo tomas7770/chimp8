@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <cerrno>
 #include "Chip8.h"
-#include "Clock.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -130,7 +129,7 @@ std::shared_ptr<std::fstream> load_config(bool write_mode) {
 	return config;
 }
 
-void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm, Clock* clock) {
+void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 	if (config) {
 		std::string line, key, value;
 		while (std::getline(*config, line)) {
@@ -145,7 +144,7 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm, Clock* clock)
 			
 			if (key == "cycles") {
 				try {
-					clock->set_cycle_rate(std::min(std::stoul(value), 1000000UL));
+					vm->set_cycle_rate(std::min(std::stoul(value), 1000000UL));
 				} catch (...) {}
 			}
 			else if (key == "sound" && value == "false") {
@@ -173,13 +172,13 @@ void write_config_line(std::shared_ptr<std::fstream> config, std::string key, st
 	config->write(line.c_str(), line.length());
 }
 
-void write_config(Chip8* vm, Clock* clock) {
+void write_config(Chip8* vm) {
 	std::shared_ptr<std::fstream> config = load_config(true);
 	if (!config) {
 		std::cout << "Failed to write config.\n";
 		return;
 	}
-	write_config_line(config, "cycles", std::to_string(clock->get_cycle_rate()));
+	write_config_line(config, "cycles", std::to_string(vm->get_cycle_rate()));
 	write_config_line(config, "sound", bool_to_str(sound_enabled));
 	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
 	write_config_line(config, "legacy_memops", bool_to_str(vm->get_legacy_memops()));
@@ -215,7 +214,6 @@ int main(int argc, char* args[]) {
 
 	// Create VM
 	Chip8 vm;
-	Clock clock(&vm);
 
 	// Config
 	{
@@ -228,9 +226,9 @@ int main(int argc, char* args[]) {
 				std::cout << "Error loading config. Default settings will be used.\n";
 				break;
 		}
-		parse_config(config, &vm, &clock);
+		parse_config(config, &vm);
 		if (config_status != CONFIG_ERROR)
-			write_config(&vm, &clock);
+			write_config(&vm);
 	}
 
 	// Initialize SDL
@@ -311,7 +309,7 @@ int main(int argc, char* args[]) {
 		}
 		uint64_t delta_time = SDL_GetTicks64() - frame_timestamp;
 		frame_timestamp = SDL_GetTicks64();
-		clock.tick(1e6*delta_time);
+		vm.tick(1e6*delta_time);
 		delay_metatimer += delta_time;
 		sound_metatimer += delta_time;
 		vm.cycle_delaytimer(delay_metatimer);

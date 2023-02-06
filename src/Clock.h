@@ -2,7 +2,8 @@
 #define CLOCK_H
 
 #include <cstdint>
-#include "Chip8.h"
+
+class Chip8;
 
 // Time units in nanoseconds (except for cycle_rate which is cycles/sec)
 

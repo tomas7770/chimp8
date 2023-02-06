@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include "Clock.h"
 
 constexpr int mem_size = 4096;
 constexpr int reg_count = 16;
@@ -45,6 +46,10 @@ public:
 	void on_keypress(int key);
 	void on_keyrelease(int key);
 
+	void tick(uint64_t delta_time);
+	uint64_t get_cycle_rate();
+	void set_cycle_rate(uint64_t new_cycle_rate);
+
 	bool get_display_pixel(int i);
 	bool get_legacy_shift();
 	bool get_legacy_memops();
@@ -53,6 +58,7 @@ public:
 
 	typedef void(Chip8::*opcode_ptr)();
 private:
+	Clock clock;
 	uint16_t opcode;
 	uint8_t memory[mem_size];
 	uint8_t registers[reg_count];

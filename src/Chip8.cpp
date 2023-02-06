@@ -9,7 +9,7 @@ Chip8::opcode_ptr Chip8::opcode_funcs[] = {
 };
 
 
-Chip8::Chip8() {
+Chip8::Chip8() : clock(this) {
 	opcode = 0;
 	for (int i = 0; i < mem_size; i++)
 		memory[i] = 0;
@@ -464,6 +464,18 @@ void Chip8::on_keypress(int key) {
 
 void Chip8::on_keyrelease(int key) {
 	keys[key] = false;
+}
+
+void Chip8::tick(uint64_t delta_time) {
+	clock.tick(delta_time);
+}
+
+uint64_t Chip8::get_cycle_rate() {
+	return clock.get_cycle_rate();
+}
+
+void Chip8::set_cycle_rate(uint64_t new_cycle_rate) {
+	clock.set_cycle_rate(new_cycle_rate);
 }
 
 bool Chip8::get_display_pixel(int i) {
