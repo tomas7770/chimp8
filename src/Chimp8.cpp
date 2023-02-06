@@ -162,10 +162,10 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 				} catch (...) {}
 			}
 			else if (key == "legacy_memops" && value == "true") {
-				vm->legacy_memops = true;
+				vm->set_legacy_memops(true);
 			}
 			else if (key == "legacy_shift" && value == "true") {
-				vm->legacy_shift = true;
+				vm->set_legacy_shift(true);
 			}
 		}
 	}
@@ -189,8 +189,8 @@ void write_config(Chip8* vm) {
 	write_config_line(config, "cycles", std::to_string(cycle_rate));
 	write_config_line(config, "sound", bool_to_str(sound_enabled));
 	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
-	write_config_line(config, "legacy_memops", bool_to_str(vm->legacy_memops));
-	write_config_line(config, "legacy_shift", bool_to_str(vm->legacy_shift));
+	write_config_line(config, "legacy_memops", bool_to_str(vm->get_legacy_memops()));
+	write_config_line(config, "legacy_shift", bool_to_str(vm->get_legacy_shift()));
 }
 
 void draw_display(Chip8* vm, SDL_Renderer* renderer) {
@@ -202,7 +202,7 @@ void draw_display(Chip8* vm, SDL_Renderer* renderer) {
 	int x_scale = WINDOW_WIDTH / screen_w;
 	int y_scale = WINDOW_HEIGHT / screen_h;
 	for (int i = 0; i < screen_size; i++) {
-		if (vm->display[i]) {
+		if (vm->get_display_pixel(i)) {
 			// Render white filled quad
 			SDL_Rect fill_rect = { (i % screen_w) * x_scale, (i / screen_w) * y_scale, x_scale, y_scale };
 			SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -222,7 +222,6 @@ int main(int argc, char* args[]) {
 
 	// Create VM
 	Chip8 vm;
-	init_vm(&vm);
 
 	// Config
 	{
@@ -289,7 +288,7 @@ int main(int argc, char* args[]) {
 	// Event handler
 	SDL_Event e;
 	// Load rom from file into VM
-	load_rom(&vm, rom_file, &rom_size);
+	vm.load_rom(rom_file, rom_size);
 	// Main loop
 	uint64_t frame_timestamp = SDL_GetTicks64();
 	uint64_t cycle_timer = 0; // in microseconds
@@ -303,7 +302,7 @@ int main(int argc, char* args[]) {
 			else if (e.type == SDL_KEYDOWN) {
 				for (int i = 0; i < key_count; i++) {
 					if (e.key.keysym.scancode == keymap[i]) {
-						on_keypress(&vm, i);
+						vm.on_keypress(i);
 						break;
 					}
 				}
@@ -311,7 +310,7 @@ int main(int argc, char* args[]) {
 			else if (e.type == SDL_KEYUP) {
 				for (int i = 0; i < key_count; i++) {
 					if (e.key.keysym.scancode == keymap[i]) {
-						vm.keys[i] = false;
+						vm.on_keyrelease(i);
 						break;
 					}
 				}
@@ -325,11 +324,11 @@ int main(int argc, char* args[]) {
 		sound_metatimer += delta_time;
 		frame_timestamp = SDL_GetTicks64();
 		while (cycle_timer >= cycle_time) {
-			cycle_vm(&vm);
+			vm.cycle_vm();
 			cycle_timer -= cycle_time;
 		}
-		cycle_delaytimer(&vm, delay_metatimer);
-		uint8_t sound_timer = cycle_soundtimer(&vm, sound_metatimer);
+		vm.cycle_delaytimer(delay_metatimer);
+		uint8_t sound_timer = vm.cycle_soundtimer(sound_metatimer);
 		if (sound_enabled) {
 			if (sound_timer > 0 && !Mix_Playing(0)) {
 				Mix_PlayChannel(0, beep, -1);
