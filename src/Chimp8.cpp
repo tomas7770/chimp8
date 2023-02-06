@@ -31,7 +31,7 @@
 #define IDLE_SLEEP 1000
 #define WIN_IDLE_SLEEP 1
 
-#define MAX_CYCLES_PER_FRAME 100
+#define MAX_CYCLES_PER_FRAME 20000
 
 enum ConfigStatus {
 	CONFIG_LOADED,
