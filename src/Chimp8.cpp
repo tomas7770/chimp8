@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cerrno>
 #include "Chip8.h"
+#include "Clock.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -31,8 +32,6 @@
 #define IDLE_SLEEP 1000
 #define WIN_IDLE_SLEEP 1
 
-#define MAX_CYCLES_PER_FRAME 20000
-
 enum ConfigStatus {
 	CONFIG_LOADED,
 	CONFIG_NOENT,
@@ -48,10 +47,6 @@ const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_Z, SDL_SCANCODE_C,
 	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
-
-uint64_t cycle_rate = 1000;
-uint64_t cycle_time;
-uint64_t max_cycle_accum;
 
 bool sound_enabled = true;
 int sound_buffer_size = 1024;
@@ -135,7 +130,7 @@ std::shared_ptr<std::fstream> load_config(bool write_mode) {
 	return config;
 }
 
-void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
+void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm, Clock* clock) {
 	if (config) {
 		std::string line, key, value;
 		while (std::getline(*config, line)) {
@@ -150,7 +145,7 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			
 			if (key == "cycles") {
 				try {
-					cycle_rate = std::min(std::stoul(value), 1000000UL);
+					clock->set_cycle_rate(std::min(std::stoul(value), 1000000UL));
 				} catch (...) {}
 			}
 			else if (key == "sound" && value == "false") {
@@ -169,8 +164,6 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			}
 		}
 	}
-	cycle_time = 1000000 / cycle_rate;
-	max_cycle_accum = cycle_time * MAX_CYCLES_PER_FRAME;
 }
 
 std::string bool_to_str(bool b) { return b ? "true" : "false";}
@@ -180,13 +173,13 @@ void write_config_line(std::shared_ptr<std::fstream> config, std::string key, st
 	config->write(line.c_str(), line.length());
 }
 
-void write_config(Chip8* vm) {
+void write_config(Chip8* vm, Clock* clock) {
 	std::shared_ptr<std::fstream> config = load_config(true);
 	if (!config) {
 		std::cout << "Failed to write config.\n";
 		return;
 	}
-	write_config_line(config, "cycles", std::to_string(cycle_rate));
+	write_config_line(config, "cycles", std::to_string(clock->get_cycle_rate()));
 	write_config_line(config, "sound", bool_to_str(sound_enabled));
 	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
 	write_config_line(config, "legacy_memops", bool_to_str(vm->get_legacy_memops()));
@@ -222,6 +215,7 @@ int main(int argc, char* args[]) {
 
 	// Create VM
 	Chip8 vm;
+	Clock clock(&vm);
 
 	// Config
 	{
@@ -234,9 +228,9 @@ int main(int argc, char* args[]) {
 				std::cout << "Error loading config. Default settings will be used.\n";
 				break;
 		}
-		parse_config(config, &vm);
+		parse_config(config, &vm, &clock);
 		if (config_status != CONFIG_ERROR)
-			write_config(&vm);
+			write_config(&vm, &clock);
 	}
 
 	// Initialize SDL
@@ -291,7 +285,6 @@ int main(int argc, char* args[]) {
 	vm.load_rom(rom_file, rom_size);
 	// Main loop
 	uint64_t frame_timestamp = SDL_GetTicks64();
-	uint64_t cycle_timer = 0; // in microseconds
 	int delay_metatimer = 0;
 	int sound_metatimer = 0;
 	bool running = true;
@@ -317,16 +310,10 @@ int main(int argc, char* args[]) {
 			}
 		}
 		uint64_t delta_time = SDL_GetTicks64() - frame_timestamp;
-		cycle_timer += 1000 * delta_time;
-		if (cycle_timer > max_cycle_accum)
-			cycle_timer = max_cycle_accum;
+		frame_timestamp = SDL_GetTicks64();
+		clock.tick(1e6*delta_time);
 		delay_metatimer += delta_time;
 		sound_metatimer += delta_time;
-		frame_timestamp = SDL_GetTicks64();
-		while (cycle_timer >= cycle_time) {
-			vm.cycle_vm();
-			cycle_timer -= cycle_time;
-		}
 		vm.cycle_delaytimer(delay_metatimer);
 		uint8_t sound_timer = vm.cycle_soundtimer(sound_metatimer);
 		if (sound_enabled) {
