@@ -39,6 +39,12 @@ enum ConfigStatus {
 
 ConfigStatus config_status;
 
+// Strings for storing timing mode in config
+const std::string timing_mode_strings[] = {
+	"fixed",
+	"cosmac",
+};
+
 // SDL keys for CHIP-8 keypad
 const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_X, SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
@@ -47,6 +53,7 @@ const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
 
+uint64_t config_cycle_rate = 1000;
 bool sound_enabled = true;
 int sound_buffer_size = 1024;
 
@@ -144,7 +151,7 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			
 			if (key == "cycles") {
 				try {
-					vm->set_cycle_rate(std::min(std::stoul(value), 1000000UL));
+					config_cycle_rate = std::stoul(value);
 				} catch (...) {}
 			}
 			else if (key == "sound" && value == "false") {
@@ -161,8 +168,12 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			else if (key == "legacy_shift" && value == "true") {
 				vm->set_legacy_shift(true);
 			}
+			else if (key == "timing" && value == timing_mode_strings[TIMING_COSMAC]) {
+				vm->set_timing_mode(TIMING_COSMAC);
+			}
 		}
 	}
+	vm->set_cycle_rate(std::min(config_cycle_rate, 1000000UL));
 }
 
 std::string bool_to_str(bool b) { return b ? "true" : "false";}
@@ -178,11 +189,12 @@ void write_config(Chip8* vm) {
 		std::cout << "Failed to write config.\n";
 		return;
 	}
-	write_config_line(config, "cycles", std::to_string(vm->get_cycle_rate()));
+	write_config_line(config, "cycles", std::to_string(config_cycle_rate));
 	write_config_line(config, "sound", bool_to_str(sound_enabled));
 	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
 	write_config_line(config, "legacy_memops", bool_to_str(vm->get_legacy_memops()));
 	write_config_line(config, "legacy_shift", bool_to_str(vm->get_legacy_shift()));
+	write_config_line(config, "timing", timing_mode_strings[vm->get_timing_mode()]);
 }
 
 void draw_display(Chip8* vm, SDL_Renderer* renderer) {

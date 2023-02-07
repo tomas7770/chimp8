@@ -35,6 +35,11 @@ constexpr uint8_t chip8_fontset[fontset_size] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+enum TimingMode {
+	TIMING_FIXED,
+	TIMING_COSMAC,
+};
+
 class Chip8 {
 public:
 	Chip8();
@@ -47,8 +52,9 @@ public:
 	void on_keyrelease(int key);
 
 	void tick(uint64_t delta_time);
-	uint64_t get_cycle_rate();
 	void set_cycle_rate(uint64_t new_cycle_rate);
+	TimingMode get_timing_mode();
+	void set_timing_mode(TimingMode new_timing_mode);
 
 	bool get_display_pixel(int i);
 	bool get_legacy_shift();
@@ -59,6 +65,10 @@ public:
 	typedef void(Chip8::*opcode_ptr)();
 private:
 	Clock clock;
+	int opcode_cycles;
+	TimingMode timing_mode;
+	int cycles = 0;
+
 	uint16_t opcode;
 	uint8_t memory[mem_size];
 	uint8_t registers[reg_count];

@@ -11,13 +11,8 @@ Clock::Clock(Chip8* target_vm) {
 	vm = target_vm;
 }
 
-uint64_t Clock::get_cycle_rate() {
-	return cycle_rate;
-}
-
 void Clock::set_cycle_rate(uint64_t new_cycle_rate) {
-	cycle_rate = new_cycle_rate;
-	cycle_time = 1e9 / cycle_rate;
+	cycle_time = 1e9 / new_cycle_rate;
 	max_cycle_accum = cycle_time * max_cycles_per_frame;
 }
 
