@@ -151,7 +151,7 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			
 			if (key == "cycles") {
 				try {
-					config_cycle_rate = std::stoul(value);
+					config_cycle_rate = std::min(std::stoul(value), 1000000UL);
 				} catch (...) {}
 			}
 			else if (key == "sound" && value == "false") {
@@ -173,7 +173,7 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			}
 		}
 	}
-	vm->set_cycle_rate(std::min(config_cycle_rate, 1000000UL));
+	vm->set_cycle_rate(config_cycle_rate);
 }
 
 std::string bool_to_str(bool b) { return b ? "true" : "false";}
