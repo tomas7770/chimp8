@@ -2,7 +2,6 @@
 
 A [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) interpreter, written in C++ and using SDL2.
 
-
 Runs on **Windows** and **Linux**. Make sure to run it from CLI (or drag and drop a rom file in Windows).
 
 # Features
@@ -28,6 +27,26 @@ Runs on **Windows** and **Linux**. Make sure to run it from CLI (or drag and dro
 - GUI for loading roms and configuring the interpreter
 
 - CMake support (for building)
+
+# Default keymap
+
+COSMAC VIP layout mapped to a 4x4 rectangular array of keys, 1 through V in QWERTY. Shown below.
+
+(Real key in a QWERTY layout: emulated key)
+
+1: 1, 2: 2, 3: 3, 4: C,
+
+
+
+Q: 4, W: 5, E: 6, R: D,
+
+
+
+A: 7, S: 8, D: 9, F: E,
+
+
+
+Z: A, X: 0, C: B, V: F
 
 # Configuration
 
@@ -64,5 +83,3 @@ x86_64-w64-mingw32-g++ src/*.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -L ~/S
 **This command may vary depending on your setup.** It assumes that you extracted SDL2 and SDL mixer in folders named `SDL2` and `SDL2_mixer` in your `home` directory, and that `x86_64-w64-mingw32-g++` is the MinGW g++ compiler for 64-bit Windows. **32-bit versions have not been tested. Try at your own risk.**
 
 Might also compile with Visual Studio/MSVC if you know how to configure it.
-
-
