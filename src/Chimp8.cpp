@@ -53,7 +53,7 @@ const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
 
-uint64_t config_cycle_rate = 1000;
+uint64_t config_cycle_rate = 500;
 bool sound_enabled = true;
 int sound_buffer_size = 1024;
 
@@ -168,8 +168,8 @@ void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
 			else if (key == "legacy_shift" && value == "true") {
 				vm->set_legacy_shift(true);
 			}
-			else if (key == "timing" && value == timing_mode_strings[TIMING_COSMAC]) {
-				vm->set_timing_mode(TIMING_COSMAC);
+			else if (key == "timing" && value == timing_mode_strings[TIMING_FIXED]) {
+				vm->set_timing_mode(TIMING_FIXED);
 			}
 		}
 	}

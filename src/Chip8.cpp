@@ -12,7 +12,7 @@ Chip8::opcode_ptr Chip8::opcode_funcs[] = {
 
 
 Chip8::Chip8() : clock(this) {
-	set_timing_mode(TIMING_FIXED);
+	set_timing_mode(TIMING_COSMAC);
 	cycles = 0;
 	opcode = 0;
 	for (int i = 0; i < mem_size; i++)
