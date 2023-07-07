@@ -68,18 +68,41 @@ Run the interpreter with any rom file. A default config will be created in the i
 
 ## Linux
 
-In your distro of choice, install **g++, Make, SDL2 and SDL mixer (development libraries, not runtime)**. `cd` to the repository's directory and run `make`.
+1. Install **g++, Make, SDL2 and SDL2 mixer (development libraries)**. The procedure for this depends on your distro.
 
-Alternatively, compile the **src/** files using another C++ compiler of your choice. Make sure to link with SDL2 and SDL mixer.
+2. Download/clone this repository and `cd` to its directory.
+
+3. Build it (dynamically linked):
+   `make`
+
+4. Test it (optional):
+   `./Chimp8`
+
+5. Strip debug symbols to reduce executable size:
+   `make strip`
 
 ## Windows
 
-Install **MinGW-w64** (either on a Linux distro or on Windows). Download **SDL2 and SDL mixer development libraries for MinGW**. `cd` to the repository's directory and run something like the following:
+1. Install [MSYS2](https://www.msys2.org/) and start with the **UCRT64** environment.
 
-```
-x86_64-w64-mingw32-g++ src/*.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -L ~/SDL2/x86_64-w64-mingw32/lib/ -L ~/SDL2_mixer/x86_64-w64-mingw32/lib/ -lshlwapi -I ~/SDL2/x86_64-w64-mingw32/include/ -I ~/SDL2/x86_64-w64-mingw32/include/SDL2/ -I ~/SDL2_mixer/x86_64-w64-mingw32/include/
-```
+2. Update the packages:
+   `pacman -Syu`
+   You may need to run this step **more than once** to make sure that all packages are up-to-date.
 
-**This command may vary depending on your setup.** It assumes that you extracted SDL2 and SDL mixer in folders named `SDL2` and `SDL2_mixer` in your `home` directory, and that `x86_64-w64-mingw32-g++` is the MinGW g++ compiler for 64-bit Windows. **32-bit versions have not been tested. Try at your own risk.**
+3. Install build tools and dependencies:
+   `pacman -S mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-SDL2 mingw-w64-ucrt-x86_64-SDL2_mixer`
 
-Might also compile with Visual Studio/MSVC if you know how to configure it.
+4. Download/clone this repository and `cd` to its directory.
+
+5. Build it (dynamically linked):
+   `mingw32-make`
+   Alternatively, build a statically linked executable:
+   `mingw32-make STATIC=1`
+
+6. Test it (optional):
+   `./Chimp8.exe`
+
+7. Strip debug symbols to reduce executable size:
+   `mingw32-make strip`
+
+8. If you built a dynamically linked executable, you'll need to copy DLLs from `/ucrt64/bin` for the app to start outside MSYS2.
