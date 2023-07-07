@@ -1,3 +1,4 @@
+#include <SDL2/SDL_scancode.h> // stupid intellisense breaks without this BEFORE SDL.h!
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <iostream>
