@@ -5,46 +5,18 @@
 #include <fstream>
 #include <string>
 #include <memory>
-#include <algorithm>
 #include <stdexcept>
 #include <cctype>
 #include <cstdlib>
 #include <cerrno>
 #include "Chip8.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#include <shlwapi.h>
-#else
-#include <unistd.h>
-#include <linux/limits.h>
-#endif
+#include "Platform.h"
+#include "Config.h"
 
 #define WINDOW_TITLE "Chimp8 - CHIP-8 Interpreter"
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 #define SOUND_EFFECT "res/beep.wav"
-#define MAX_SOUND_BUFFER 65536
-
-#define CONFIG_FOLDER_NAME "Chimp8"
-#define CONFIG_NAME "Chimp8.ini"
-
-#define IDLE_SLEEP 1000
-#define WIN_IDLE_SLEEP 1
-
-enum ConfigStatus {
-	CONFIG_LOADED,
-	CONFIG_NOENT,
-	CONFIG_ERROR,
-};
-
-ConfigStatus config_status;
-
-// Strings for storing timing mode in config
-const std::string timing_mode_strings[] = {
-	"fixed",
-	"cosmac",
-};
 
 // SDL keys for CHIP-8 keypad
 const SDL_Scancode keymap[key_count] = {
@@ -53,10 +25,6 @@ const SDL_Scancode keymap[key_count] = {
 	SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_Z, SDL_SCANCODE_C,
 	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
-
-uint64_t config_cycle_rate = 500;
-bool sound_enabled = true;
-int sound_buffer_size = 1024;
 
 void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_Chunk* beep, int error_code) {
 	if (window)
@@ -70,132 +38,6 @@ void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_C
 	Mix_Quit();
 	SDL_Quit();
 	std::exit(error_code);
-}
-
-std::string get_program_path() {
-#ifdef _WIN32
-	WCHAR program_path[MAX_PATH];
-	GetModuleFileNameW(NULL, program_path, MAX_PATH);
-	PathRemoveFileSpecW(program_path);
-
-	char program_path_conv[MAX_PATH];
-	WideCharToMultiByte(CP_UTF8, 0, program_path, -1, program_path_conv, MAX_PATH, NULL, NULL);
-
-	return std::string(program_path_conv);
-#else
-	char program_path[PATH_MAX];
-	if (readlink("/proc/self/exe", program_path, PATH_MAX) == -1) {
-		throw std::runtime_error("Couldn't find program path");
-	}
-
-	std::string program_path_str(program_path);
-	return program_path_str.substr(0, program_path_str.find_last_of("/"));
-#endif
-}
-
-std::string get_config_path() {
-#ifdef _WIN32
-	std::string config_path = get_program_path() + "\\" + CONFIG_NAME;
-	return config_path;
-#else
-	std::string config_home;
-	
-	if (const char* config_home_raw = std::getenv("XDG_CONFIG_HOME")) {
-		config_home = std::string(config_home_raw);
-	}
-	else {
-		if (const char* user_home = std::getenv("HOME")) {
-			config_home = std::string(user_home) + "/.config";
-		}
-		else {
-			throw std::runtime_error("Couldn't find appropriate location to load config");
-		}
-	}
-
-	std::string config_path = config_home + "/" + CONFIG_FOLDER_NAME + "/" + CONFIG_NAME;
-	return config_path;
-#endif
-}
-
-std::shared_ptr<std::fstream> load_config(bool write_mode) {
-	std::shared_ptr<std::fstream> config = std::make_shared<std::fstream>();
-	try {
-		config->open(get_config_path(), write_mode ? (std::ios::out | std::ios::trunc) : std::ios::in);
-	}
-	catch (std::runtime_error) {
-		config_status = CONFIG_ERROR;
-		return NULL;
-	}
-	if (config->fail()) {
-		if (errno == ENOENT)
-			config_status = CONFIG_NOENT;
-		else
-			config_status = CONFIG_ERROR;
-		return NULL;
-	}
-	config_status = CONFIG_LOADED;
-	return config;
-}
-
-void parse_config(std::shared_ptr<std::fstream> config, Chip8* vm) {
-	if (config) {
-		std::string line, key, value;
-		while (std::getline(*config, line)) {
-			line.erase(std::remove_if(line.begin(), line.end(),
-				[](unsigned char x){ return std::isspace(x); }), line.end());
-
-			int eq_pos = line.find("=");
-			if (eq_pos == std::string::npos || line.length() <= eq_pos + 1)
-				continue;
-			key = line.substr(0, eq_pos);
-			value = line.substr(eq_pos + 1);
-			
-			if (key == "cycles") {
-				try {
-					config_cycle_rate = std::min(std::stoul(value), 1000000UL);
-				} catch (...) {}
-			}
-			else if (key == "sound" && value == "false") {
-				sound_enabled = false;
-			}
-			else if (key == "sound_buffer") {
-				try {
-					sound_buffer_size = std::max(0, std::min(std::stoi(value), MAX_SOUND_BUFFER));
-				} catch (...) {}
-			}
-			else if (key == "legacy_memops" && value == "true") {
-				vm->set_legacy_memops(true);
-			}
-			else if (key == "legacy_shift" && value == "true") {
-				vm->set_legacy_shift(true);
-			}
-			else if (key == "timing" && value == timing_mode_strings[TIMING_FIXED]) {
-				vm->set_timing_mode(TIMING_FIXED);
-			}
-		}
-	}
-	vm->set_cycle_rate(config_cycle_rate);
-}
-
-std::string bool_to_str(bool b) { return b ? "true" : "false";}
-
-void write_config_line(std::shared_ptr<std::fstream> config, std::string key, std::string value) {
-	std::string line = key + "=" + value + "\n";
-	config->write(line.c_str(), line.length());
-}
-
-void write_config(Chip8* vm) {
-	std::shared_ptr<std::fstream> config = load_config(true);
-	if (!config) {
-		std::cout << "Failed to write config.\n";
-		return;
-	}
-	write_config_line(config, "cycles", std::to_string(config_cycle_rate));
-	write_config_line(config, "sound", bool_to_str(sound_enabled));
-	write_config_line(config, "sound_buffer", std::to_string(sound_buffer_size));
-	write_config_line(config, "legacy_memops", bool_to_str(vm->get_legacy_memops()));
-	write_config_line(config, "legacy_shift", bool_to_str(vm->get_legacy_shift()));
-	write_config_line(config, "timing", timing_mode_strings[vm->get_timing_mode()]);
 }
 
 void draw_display(Chip8* vm, SDL_Renderer* renderer) {
@@ -229,20 +71,7 @@ int main(int argc, char* args[]) {
 	Chip8 vm;
 
 	// Config
-	{
-		std::shared_ptr<std::fstream> config = load_config(false);
-		switch (config_status) {
-			case CONFIG_NOENT:
-				std::cout << "Config not found. Default settings will be used, and a config file will be created.\n";
-				break;
-			case CONFIG_ERROR:
-				std::cout << "Error loading config. Default settings will be used.\n";
-				break;
-		}
-		parse_config(config, &vm);
-		if (config_status != CONFIG_ERROR)
-			write_config(&vm);
-	}
+	load_config_into_vm(&vm);
 
 	// Initialize SDL
 	SDL_Window* window = NULL;
@@ -336,11 +165,7 @@ int main(int argc, char* args[]) {
 			}
 		}
 		draw_display(&vm, renderer);
-		#ifdef _WIN32
-		Sleep(WIN_IDLE_SLEEP);
-		#else
-		usleep(IDLE_SLEEP);
-		#endif
+		main_sleep();
 	}
 
 	terminate(window, renderer, rom_file, beep, 0);
