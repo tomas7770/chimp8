@@ -26,13 +26,67 @@ const SDL_Scancode keymap[key_count] = {
     SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
 
-void terminate(SDL_Window* window, SDL_Renderer* renderer, void* rom_file, Mix_Chunk* beep, int error_code) {
+SDL_Window* window = NULL;
+SDL_Renderer* renderer = NULL;
+Mix_Chunk* beep = NULL;
+
+void terminate(int error_code);
+
+void setup_SDL() {
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        terminate(-1);
+    }
+
+    window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        WINDOW_WIDTH, WINDOW_HEIGHT,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    if (window == NULL) {
+        std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        terminate(-1);
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == NULL) {
+        std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        terminate(-1);
+    }
+    SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // Initialize SDL_mixer
+    if (sound_enabled) {
+        if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, sound_buffer_size) < 0) {
+            std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
+            terminate(-1);
+        }
+        beep = Mix_LoadWAV((get_program_path() + "/" + SOUND_EFFECT).c_str());
+        if (beep == NULL) {
+            std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
+            terminate(-1);
+        }
+    }
+}
+
+void load_rom_from_file(char* file_name, Chip8* vm) {
+    SDL_RWops* rom_file_rwops = SDL_RWFromFile(file_name, "r+b");
+    size_t rom_size;
+    void* rom_file = SDL_LoadFile_RW(rom_file_rwops, &rom_size, 1);
+
+    if (rom_file == NULL) {
+        std::cout << "ROM could not be loaded! SDL_Error: " << SDL_GetError() << std::endl;
+        terminate(-1);
+    }
+
+    vm->load_rom(rom_file, rom_size);
+    SDL_free(rom_file);
+}
+
+void terminate(int error_code) {
     if (window)
         SDL_DestroyWindow(window);
     if (renderer)
         SDL_DestroyRenderer(renderer);
-    if (rom_file)
-        SDL_free(rom_file);
     if (beep)
         Mix_FreeChunk(beep);
     Mix_Quit();
@@ -74,55 +128,12 @@ int main(int argc, char* args[]) {
     load_config_into_vm(&vm);
 
     // Initialize SDL
-    SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
-    SDL_RWops* rom_file_rwops = SDL_RWFromFile(args[1], "r+b");
-    size_t rom_size;
-    void* rom_file = SDL_LoadFile_RW(rom_file_rwops, &rom_size, 1);
-
-    if (rom_file == NULL) {
-        std::cout << "ROM could not be loaded! SDL_Error: " << SDL_GetError() << std::endl;
-        terminate(window, renderer, rom_file, NULL, -1);
-    }
-    
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        terminate(window, renderer, rom_file, NULL, -1);
-    }
-
-    window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        WINDOW_WIDTH, WINDOW_HEIGHT,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    if (window == NULL) {
-        std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        terminate(window, renderer, rom_file, NULL, -1);
-    }
-
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL) {
-        std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        terminate(window, renderer, rom_file, NULL, -1);
-    }
-    SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    // Initialize SDL_mixer
-    Mix_Chunk* beep = NULL;
-    if (sound_enabled) {
-        if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, sound_buffer_size) < 0) {
-            std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
-            terminate(window, renderer, rom_file, beep, -1);
-        }
-        beep = Mix_LoadWAV((get_program_path() + "/" + SOUND_EFFECT).c_str());
-        if (beep == NULL) {
-            std::cout << "Sound effect could not load! SDL_mixer Error: " << Mix_GetError() << std::endl;
-            terminate(window, renderer, rom_file, beep, -1);
-        }
-    }
+    setup_SDL();
 
     // Event handler
     SDL_Event e;
     // Load rom from file into VM
-    vm.load_rom(rom_file, rom_size);
+    load_rom_from_file(args[1], &vm);
     // Main loop
     uint64_t frame_timestamp = SDL_GetTicks64();
     int delay_metatimer = 0;
@@ -168,6 +179,6 @@ int main(int argc, char* args[]) {
         main_sleep();
     }
 
-    terminate(window, renderer, rom_file, beep, 0);
+    terminate(0);
     return 0;
 }
