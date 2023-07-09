@@ -8,9 +8,9 @@
 #include "Chip8.h"
 
 enum ConfigStatus {
-	CONFIG_LOADED,
-	CONFIG_NOENT,
-	CONFIG_ERROR,
+    CONFIG_LOADED,
+    CONFIG_NOENT,
+    CONFIG_ERROR,
 };
 
 extern ConfigStatus config_status;
