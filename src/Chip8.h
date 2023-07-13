@@ -103,6 +103,8 @@ private:
     // Opcodes
     void opcode_00E0();
     void opcode_00EE();
+    void opcode_00FE();
+    void opcode_00FF();
     void opcode_1NNN();
     void opcode_2NNN();
     void opcode_3XNN();
@@ -137,7 +139,7 @@ private:
     void opcode_FX65();
 
     // Opcode function pointers
-    void opcode_00Ex();
+    void opcode_00yx();
     void opcode_8XYx();
     void opcode_EXxy();
     void opcode_FXxy();

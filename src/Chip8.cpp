@@ -5,7 +5,7 @@
 constexpr uint64_t cosmac_cycle_rate = 220113;
 
 Chip8::opcode_ptr Chip8::opcode_funcs[] = {
-    &Chip8::opcode_00Ex, &Chip8::opcode_1NNN, &Chip8::opcode_2NNN, &Chip8::opcode_3XNN,
+    &Chip8::opcode_00yx, &Chip8::opcode_1NNN, &Chip8::opcode_2NNN, &Chip8::opcode_3XNN,
     &Chip8::opcode_4XNN, &Chip8::opcode_5XY0, &Chip8::opcode_6XNN, &Chip8::opcode_7XNN,
     &Chip8::opcode_8XYx, &Chip8::opcode_9XY0, &Chip8::opcode_ANNN, &Chip8::opcode_BNNN,
     &Chip8::opcode_CXNN, &Chip8::opcode_DXYN, &Chip8::opcode_EXxy, &Chip8::opcode_FXxy
@@ -69,6 +69,16 @@ void Chip8::opcode_00EE() {
     switch (timing_mode) {
         case TIMING_COSMAC: opcode_cycles = 10; break;
     }
+}
+
+// [SUPER-CHIP] Disable extended screen mode
+void Chip8::opcode_00FE() {
+    hi_res = false;
+}
+
+// [SUPER-CHIP] Enable extended screen mode
+void Chip8::opcode_00FF() {
+    hi_res = true;
 }
 
 // Jump
@@ -521,13 +531,19 @@ void Chip8::opcode_FX65() {
 }
 
 
-void Chip8::opcode_00Ex() {
+void Chip8::opcode_00yx() {
     switch (opcode) {
         case 0x00E0:
             opcode_00E0();
             break;
         case 0x00EE:
             opcode_00EE();
+            break;
+        case 0x00FE:
+            opcode_00FE();
+            break;
+        case 0x00FF:
+            opcode_00FF();
             break;
     }
 }
