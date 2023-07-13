@@ -9,8 +9,8 @@ constexpr int mem_size = 4096;
 constexpr int reg_count = 16;
 constexpr int stack_depth = 16;
 constexpr int key_count = 16;
-constexpr int screen_w = 64;
-constexpr int screen_h = 32;
+constexpr int screen_w = 128;
+constexpr int screen_h = 64;
 constexpr int screen_size = screen_w * screen_h;
 constexpr int font_address = 0x50;
 constexpr int fontset_size = 80;
@@ -89,10 +89,16 @@ private:
     // Indicates which register will store the key pressed
     int keypress_store_reg;
 
+    // SUPER-CHIP extended screen mode
+    bool hi_res;
+
     // Flag for original CHIP-8 8XY6 and 8XYE opcode behavior (if false, use SCHIP behavior)
     bool legacy_shift;
     // Flag for original CHIP-8 FX55 and FX65 opcode behavior (if false, use SCHIP behavior)
     bool legacy_memops;
+
+    // Draw display pixel, adjusted for lo/hi-res (draw 2x2 pixel in lo-res)
+    void draw_display_pixel(int x, int y, bool v, int* collision_count);
 
     // Opcodes
     void opcode_00E0();

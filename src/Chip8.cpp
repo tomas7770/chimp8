@@ -35,6 +35,7 @@ Chip8::Chip8() : clock(this) {
         display[i] = 0;
     halted_keypress = false;
     keypress_store_reg = 0;
+    hi_res = false;
     legacy_shift = false;
     legacy_memops = false;
 }
@@ -363,13 +364,8 @@ void Chip8::opcode_DXYN() {
         row = memory[I++];
         int mask = 0x80;
         for (int j = 0; j < 8; j++) {
-            int screen_coord = (vx + j) % screen_w + ((vy + i) % screen_h)*screen_w;
             bool pixel = (row & mask) ? 1 : 0;
-            if (display[screen_coord] && !(display[screen_coord] ^ pixel))
-                registers[0xF] = 1;
-            if (display[screen_coord] && pixel)
-                collision_count++;
-            display[screen_coord] ^= pixel;
+            draw_display_pixel(vx + j, vy + i, pixel, &collision_count);
             mask >>= 1;
         }
     }
@@ -706,4 +702,18 @@ void Chip8::set_legacy_shift(bool enabled) {
 
 void Chip8::set_legacy_memops(bool enabled) {
     legacy_memops = enabled;
+}
+
+// Draw display pixel, adjusted for lo/hi-res (draw 2x2 pixel in lo-res)
+void Chip8::draw_display_pixel(int x, int y, bool pixel, int* collision_count) {
+    for (int ny = hi_res ? y : y*2; ny <= (hi_res ? y : y*2+1); ny++) {
+        for (int nx = hi_res ? x : x*2; nx <= (hi_res ? x : x*2+1); nx++) {
+            int screen_coord = nx % screen_w + (ny % screen_h)*screen_w;
+            if (display[screen_coord] && !(display[screen_coord] ^ pixel))
+                registers[0xF] = 1;
+            if (display[screen_coord] && pixel)
+                *(collision_count)++;
+            display[screen_coord] ^= pixel;
+        }
+    }
 }
