@@ -112,6 +112,8 @@ void Chimp8App::main_loop() {
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, window_title, err.what(), window_sdl);
             terminate(-1);
         }
+        if (vm.was_exit_opcode_called())
+            terminate(0);
         delay_metatimer += delta_time;
         sound_metatimer += delta_time;
         vm.cycle_delaytimer(delay_metatimer);

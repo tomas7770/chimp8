@@ -57,6 +57,7 @@ public:
     void set_timing_mode(TimingMode new_timing_mode);
 
     bool get_display_pixel(int i);
+    bool was_exit_opcode_called();
     bool get_legacy_shift();
     bool get_legacy_memops();
     void set_legacy_shift(bool enabled);
@@ -89,6 +90,8 @@ private:
     // Indicates which register will store the key pressed
     int keypress_store_reg;
 
+    // Signal app to exit after SUPER-CHIP 0x00FD opcode
+    bool exit_opcode_called;
     // SUPER-CHIP extended screen mode
     bool hi_res;
 
@@ -103,6 +106,7 @@ private:
     // Opcodes
     void opcode_00E0();
     void opcode_00EE();
+    void opcode_00FD();
     void opcode_00FE();
     void opcode_00FF();
     void opcode_1NNN();

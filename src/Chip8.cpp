@@ -35,6 +35,7 @@ Chip8::Chip8() : clock(this) {
         display[i] = 0;
     halted_keypress = false;
     keypress_store_reg = 0;
+    exit_opcode_called = false;
     hi_res = false;
     legacy_shift = false;
     legacy_memops = false;
@@ -69,6 +70,11 @@ void Chip8::opcode_00EE() {
     switch (timing_mode) {
         case TIMING_COSMAC: opcode_cycles = 10; break;
     }
+}
+
+// Exit interpreter
+void Chip8::opcode_00FD() {
+    exit_opcode_called = true;
 }
 
 // [SUPER-CHIP] Disable extended screen mode
@@ -539,6 +545,9 @@ void Chip8::opcode_00yx() {
         case 0x00EE:
             opcode_00EE();
             break;
+        case 0x00FD:
+            opcode_00FD();
+            break;
         case 0x00FE:
             opcode_00FE();
             break;
@@ -702,6 +711,10 @@ void Chip8::set_timing_mode(TimingMode new_timing_mode) {
 
 bool Chip8::get_display_pixel(int i) {
     return display[i];
+}
+
+bool Chip8::was_exit_opcode_called() {
+    return exit_opcode_called;
 }
 
 bool Chip8::get_legacy_shift() {
