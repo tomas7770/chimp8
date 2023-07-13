@@ -2,6 +2,7 @@
 #include "Platform.h"
 #include "Config.h"
 #include <iostream>
+#include <stdexcept>
 
 Chimp8App::Chimp8App() {
     load_config_into_vm(&vm);
@@ -104,7 +105,13 @@ void Chimp8App::main_loop() {
         }
         uint64_t delta_time = SDL_GetTicks64() - frame_timestamp;
         frame_timestamp = SDL_GetTicks64();
-        vm.tick(1e6*delta_time);
+        try {
+            vm.tick(1e6*delta_time);
+        }
+        catch (std::runtime_error err) {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, window_title, err.what(), window_sdl);
+            terminate(-1);
+        }
         delay_metatimer += delta_time;
         sound_metatimer += delta_time;
         vm.cycle_delaytimer(delay_metatimer);

@@ -1,5 +1,6 @@
 #include "Chip8.h"
 #include <cstdlib>
+#include <stdexcept>
 
 constexpr uint64_t cosmac_cycle_rate = 220113;
 
@@ -59,6 +60,9 @@ void Chip8::opcode_00E0() {
 
 // Return from subroutine
 void Chip8::opcode_00EE() {
+    if (sp <= 0)
+        throw std::runtime_error("Interpreter stack underflow");
+
     pc = stack[--sp];
 
     switch (timing_mode) {
@@ -77,6 +81,9 @@ void Chip8::opcode_1NNN() {
 
 // Call subroutine
 void Chip8::opcode_2NNN() {
+    if (sp >= stack_depth)
+        throw std::runtime_error("Interpreter stack overflow");
+
     stack[sp++] = pc;
     pc = (opcode & 0xFFF) - 2;
 
