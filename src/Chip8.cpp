@@ -363,6 +363,10 @@ void Chip8::opcode_CXNN() {
 // Sprites are XORed onto the existing screen.
 // Each row of 8 pixels is read as a byte starting from memory location I
 // VF is set to 1 if any screen pixels are flipped from 1 to 0, and to 0 if not
+//
+// [SUPER-CHIP] If N=0 and extended mode, draw 16x16 sprite.
+// In extended mode, sets VF to the number of rows that either collide with
+// another sprite or are clipped by the bottom of the screen.
 void Chip8::opcode_DXYN() {
     int x = (opcode & 0x0F00) >> 8;
     int y = (opcode & 0x00F0) >> 4;
@@ -370,16 +374,24 @@ void Chip8::opcode_DXYN() {
     uint8_t vy = (registers[y]) % screen_h;
 
     uint8_t n = opcode & 0xF;
+    int columns = 8;
     uint16_t I = address_reg;
     uint8_t row;
     int collision_count = 0;
+    if (n == 0 && hi_res) {
+        n = 16;
+        columns = 16;
+    }
 
     registers[0xF] = 0;
     for (int i = 0; i < n; i++) {
         // Draw a row of pixels
-        row = memory[I++];
-        int mask = 0x80;
-        for (int j = 0; j < 8; j++) {
+        int mask;
+        for (int j = 0; j < columns; j++) {
+            if (j % 8 == 0) {
+                row = memory[I++];
+                mask = 0x80;
+            }
             bool pixel = (row & mask) ? 1 : 0;
             draw_display_pixel(vx + j, vy + i, pixel, &collision_count);
             mask >>= 1;
@@ -736,10 +748,20 @@ void Chip8::set_legacy_memops(bool enabled) {
 // Draw display pixel, adjusted for lo/hi-res (draw 2x2 pixel in lo-res)
 void Chip8::draw_display_pixel(int x, int y, bool pixel, int* collision_count) {
     for (int ny = hi_res ? y : y*2; ny <= (hi_res ? y : y*2+1); ny++) {
+        bool row_collided = false;
         for (int nx = hi_res ? x : x*2; nx <= (hi_res ? x : x*2+1); nx++) {
             int screen_coord = nx % screen_w + (ny % screen_h)*screen_w;
-            if (display[screen_coord] && !(display[screen_coord] ^ pixel))
-                registers[0xF] = 1;
+            if (ny >= screen_h && hi_res && !row_collided) {
+                row_collided = true;
+                registers[0xF]++;
+            }
+            if (display[screen_coord] && !(display[screen_coord] ^ pixel) && !row_collided) {
+                row_collided = true;
+                if (hi_res)
+                    registers[0xF]++;
+                else
+                    registers[0xF] = 1;
+            }
             if (display[screen_coord] && pixel)
                 *(collision_count)++;
             display[screen_coord] ^= pixel;
