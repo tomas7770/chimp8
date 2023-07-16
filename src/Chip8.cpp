@@ -120,7 +120,7 @@ void Chip8::opcode_00FC() {
     }
 }
 
-// Exit interpreter
+// [SUPER-CHIP] Exit interpreter
 void Chip8::opcode_00FD() {
     exit_opcode_called = true;
 }
