@@ -1,6 +1,8 @@
 #include "Chip8.h"
 #include <cstdlib>
 #include <stdexcept>
+#include <algorithm>
+#include <iterator>
 
 constexpr uint64_t cosmac_cycle_rate = 220113;
 
@@ -50,6 +52,20 @@ void Chip8::load_rom(void* rom_file, size_t rom_size) {
     }
 }
 
+// [SUPER-CHIP] Scroll display N pixels down; in low resolution mode, N/2 pixels
+void Chip8::opcode_00CN() {
+    uint8_t n = opcode & 0xF;
+    bool display_copy[screen_size];
+    std::copy(std::begin(display), std::end(display), std::begin(display_copy));
+    for (int i = 0; i < screen_size; i++) {
+        int j = i-screen_w*n;
+        if (j < 0)
+            // Wrap around the bottom
+            j += screen_size;
+        display[i] = display_copy[j];
+    }
+}
+
 // Clear display
 void Chip8::opcode_00E0() {
     for (int i = 0; i < screen_size; i++)
@@ -69,6 +85,38 @@ void Chip8::opcode_00EE() {
 
     switch (timing_mode) {
         case TIMING_COSMAC: opcode_cycles = 10; break;
+    }
+}
+
+// [SUPER-CHIP] Scroll right by 4 pixels; in low resolution mode, 2 pixels
+void Chip8::opcode_00FB() {
+    bool display_copy[screen_size];
+    std::copy(std::begin(display), std::end(display), std::begin(display_copy));
+    for (int row = 0; row < screen_h; row++) {
+        for (int col = 0; col < screen_w; col++) {
+            int dest = col + row*screen_w;
+            int src = dest-4;
+            if (src < row*screen_w)
+                // Wrap around
+                src += screen_w;
+            display[dest] = display_copy[src];
+        }
+    }
+}
+
+// [SUPER-CHIP] Scroll left by 4 pixels; in low resolution mode, 2 pixels
+void Chip8::opcode_00FC() {
+    bool display_copy[screen_size];
+    std::copy(std::begin(display), std::end(display), std::begin(display_copy));
+    for (int row = 0; row < screen_h; row++) {
+        for (int col = 0; col < screen_w; col++) {
+            int dest = col + row*screen_w;
+            int src = dest+4;
+            if (src >= (row+1)*screen_w)
+                // Wrap around
+                src -= screen_w;
+            display[dest] = display_copy[src];
+        }
     }
 }
 
@@ -550,12 +598,22 @@ void Chip8::opcode_FX65() {
 
 
 void Chip8::opcode_00yx() {
+    if (opcode & 0x00F0 == 0x00C0) {
+        opcode_00CN();
+        return;
+    }
     switch (opcode) {
         case 0x00E0:
             opcode_00E0();
             break;
         case 0x00EE:
             opcode_00EE();
+            break;
+        case 0x00FB:
+            opcode_00FB();
+            break;
+        case 0x00FC:
+            opcode_00FC();
             break;
         case 0x00FD:
             opcode_00FD();

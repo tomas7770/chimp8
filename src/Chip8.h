@@ -104,8 +104,11 @@ private:
     void draw_display_pixel(int x, int y, bool v, int* collision_count);
 
     // Opcodes
+    void opcode_00CN();
     void opcode_00E0();
     void opcode_00EE();
+    void opcode_00FB();
+    void opcode_00FC();
     void opcode_00FD();
     void opcode_00FE();
     void opcode_00FF();
