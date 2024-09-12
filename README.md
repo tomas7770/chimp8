@@ -26,8 +26,6 @@ Runs on **Windows** and **Linux**. Make sure to run it from CLI (or drag and dro
 
 - GUI for loading roms and configuring the interpreter
 
-- CMake support (for building)
-
 # Default keymap
 
 COSMAC VIP layout mapped to a 4x4 rectangular array of keys, 1 through V in QWERTY. Shown below.
@@ -66,43 +64,18 @@ Run the interpreter with any rom file. A default config will be created in the i
 
 # Build instructions
 
-## Linux
+Chimp8 uses [CMake](https://cmake.org/) (>= 3.7) and requires the [SDL2](https://www.libsdl.org/) and [SDL2 mixer](https://github.com/libsdl-org/SDL_mixer) libraries.
 
-1. Install **g++, Make, SDL2 and SDL2 mixer (development libraries)**. The procedure for this depends on your distro.
+## Linux, and Windows with MSYS2
+
+1. Install **g++ (or possibly other C++ compiler), CMake, Make/Ninja or equivalent, SDL2 and SDL2 mixer (development libraries)**. The procedure for this depends on your distro.
 
 2. Download/clone this repository and `cd` to its directory.
 
-3. Build it (dynamically linked):
-   `make`
+3. Run CMake:
+   ```
+   cmake -S. -Bbuild
+   cmake --build build
+   ```
 
-4. Test it (optional):
-   `./Chimp8`
-
-5. Strip debug symbols to reduce executable size:
-   `make strip`
-
-## Windows
-
-1. Install [MSYS2](https://www.msys2.org/) and start with the **UCRT64** environment.
-
-2. Update the packages:
-   `pacman -Syu`
-   You may need to run this step **more than once** to make sure that all packages are up-to-date.
-
-3. Install build tools and dependencies:
-   `pacman -S mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-SDL2 mingw-w64-ucrt-x86_64-SDL2_mixer`
-
-4. Download/clone this repository and `cd` to its directory.
-
-5. Build it (dynamically linked):
-   `mingw32-make`
-   Alternatively, build a statically linked executable:
-   `mingw32-make STATIC=1`
-
-6. Test it (optional):
-   `./Chimp8.exe`
-
-7. Strip debug symbols to reduce executable size:
-   `mingw32-make strip`
-
-8. If you built a dynamically linked executable, you'll need to copy DLLs from `/ucrt64/bin` for the app to start outside MSYS2.
+If compilation succeeds, you should find a binary executable in the `build/` directory, possibly in a subdirectory.
