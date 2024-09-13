@@ -13,7 +13,7 @@ set(SOURCE_FILES
 
 add_executable(Chimp8 ${SOURCE_FILES})
 
-include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIR})
+include_directories(${SDL2_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR})
 if (MINGW)
     target_link_libraries(Chimp8 mingw32)
 endif()
