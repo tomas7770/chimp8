@@ -1,9 +1,9 @@
 #ifndef CHIMP8APP_H
 #define CHIMP8APP_H
 
-#include <SDL2/SDL_scancode.h> // stupid intellisense breaks without this BEFORE SDL.h!
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
+#include <SDL_scancode.h> // stupid intellisense breaks without this BEFORE SDL.h!
+#include <SDL.h>
+#include <SDL_mixer.h>
 #include "Chip8.h"
 
 class Chimp8App {
